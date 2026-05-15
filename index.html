@@ -452,7 +452,7 @@
 </div>
 
 <script>
-const MENU_URL = 'https://script.google.com/macros/s/AKfycbw5NLZsTalfheKtGFNuQKAVjy9xMxM_-gIO2ChgQzB10qXmntJdAG8vkyle0AfNvHAc/exec';
+const MENU_URL = 'https://script.google.com/macros/s/AKfycbzBHskJaFhq3_iiRAVBcwpeTLwplDdhee-0YyaFN-6UFeIqUWk-4Evfyhmob5FwP6ku/exec';
 
 const catEmoji = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
 const catDefault = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
@@ -632,7 +632,7 @@ async function placeOrder() {
   const itemsText = entries.map(({item, qty}) => `${item.name} x${qty}`).join(', ');
   const total = entries.reduce((s, v) => s + v.qty * v.item.price, 0);
 
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5NLZsTalfheKtGFNuQKAVjy9xMxM_-gIO2ChgQzB10qXmntJdAG8vkyle0AfNvHAc/exec';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBHskJaFhq3_iiRAVBcwpeTLwplDdhee-0YyaFN-6UFeIqUWk-4Evfyhmob5FwP6ku/exec';
 
   try {
     await fetch(SCRIPT_URL, {
