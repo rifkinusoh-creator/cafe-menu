@@ -452,7 +452,7 @@
 </div>
 
 <script>
-const MENU_URL = 'https://script.google.com/macros/s/AKfycbzf0SbC4lbIBiJyEQzV_F6THdUguoBAi02hmhEBDP0eQGXowPuXj2m34yKUsBzwbfY8/exec';
+const MENU_URL = 'https://script.google.com/macros/s/AKfycbw5NLZsTalfheKtGFNuQKAVjy9xMxM_-gIO2ChgQzB10qXmntJdAG8vkyle0AfNvHAc/exec';
 
 const catEmoji = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
 const catDefault = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
@@ -462,36 +462,52 @@ let menuData = [];
 let cart = {};
 let currentCat = 'all';
 
-// โหลดเมนูจาก Google Sheet
-async function loadMenu() {
+// โหลดเมนูจาก Google Sheet ด้วย JSONP (แก้ปัญหา CORS)
+function loadMenu() {
   document.getElementById('menuSection').innerHTML = `
     <div style="text-align:center;padding:60px 20px;color:var(--brown-light);">
       <div style="font-size:2rem;margin-bottom:12px;">☕</div>
       <div>กำลังโหลดเมนู...</div>
     </div>`;
-  try {
-    const res = await fetch(MENU_URL);
-    const data = await res.json();
-    menuData = data.map(row => ({
-      id: Number(row.id),
-      name: row.name || '',
-      desc: row.desc || '',
-      price: Number(row.price) || 0,
-      cat: (row.category || '').toLowerCase().trim(),
-      soldOut: String(row.soldOut).toUpperCase() === 'TRUE',
-      image: row.image || '',
-      emoji: catDefault[row.category] || '🍽️'
-    }));
-    renderMenu();
-  } catch(err) {
-    document.getElementById('menuSection').innerHTML = `
-      <div style="text-align:center;padding:60px 20px;color:#c0392b;">
-        <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
-        <div>โหลดเมนูไม่สำเร็จ</div>
-        <div style="font-size:0.8rem;margin-top:8px;color:var(--brown-light);">กรุณารีเฟรชหน้านี้ใหม่ครับ</div>
-        <button onclick="loadMenu()" style="margin-top:16px;background:var(--brown-dark);color:var(--cream);border:none;border-radius:8px;padding:10px 20px;font-family:'Sarabun',sans-serif;font-size:0.9rem;cursor:pointer;">🔄 ลองอีกครั้ง</button>
-      </div>`;
-  }
+
+  window._menuCallback = function(data) {
+    try {
+      menuData = data.map(row => ({
+        id: Number(row.id),
+        name: row.name || '',
+        desc: row.desc || '',
+        price: Number(row.price) || 0,
+        cat: (row.category || '').toLowerCase().trim(),
+        soldOut: String(row.soldOut).toUpperCase() === 'TRUE',
+        image: row.image || '',
+        emoji: catDefault[(row.category||'').toLowerCase()] || '🍽️'
+      }));
+      renderMenu();
+    } catch(e) { showMenuError(); }
+  };
+
+  const script = document.createElement('script');
+  script.src = MENU_URL + '?callback=_menuCallback';
+  script.onerror = showMenuError;
+  script.id = 'jsonp-menu';
+  const old = document.getElementById('jsonp-menu');
+  if (old) old.remove();
+  document.body.appendChild(script);
+
+  // timeout 10 วินาที
+  setTimeout(() => {
+    if (!menuData.length) showMenuError();
+  }, 10000);
+}
+
+function showMenuError() {
+  document.getElementById('menuSection').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:#c0392b;">
+      <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+      <div>โหลดเมนูไม่สำเร็จ</div>
+      <div style="font-size:0.8rem;margin-top:8px;color:var(--brown-light);">กรุณารีเฟรชหน้านี้ใหม่ครับ</div>
+      <button onclick="loadMenu()" style="margin-top:16px;background:var(--brown-dark);color:var(--cream);border:none;border-radius:8px;padding:10px 20px;font-family:'Sarabun',sans-serif;font-size:0.9rem;cursor:pointer;">🔄 ลองอีกครั้ง</button>
+    </div>`;
 }
 
 function filterCat(cat, btn) {
@@ -616,7 +632,7 @@ async function placeOrder() {
   const itemsText = entries.map(({item, qty}) => `${item.name} x${qty}`).join(', ');
   const total = entries.reduce((s, v) => s + v.qty * v.item.price, 0);
 
-  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzf0SbC4lbIBiJyEQzV_F6THdUguoBAi02hmhEBDP0eQGXowPuXj2m34yKUsBzwbfY8/exec';
+  const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5NLZsTalfheKtGFNuQKAVjy9xMxM_-gIO2ChgQzB10qXmntJdAG8vkyle0AfNvHAc/exec';
 
   try {
     await fetch(SCRIPT_URL, {
