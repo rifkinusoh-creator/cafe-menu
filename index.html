@@ -452,39 +452,47 @@
 </div>
 
 <script>
-const menuData = [
-  // COFFEE
-  { id:1, cat:'coffee', name:'Espresso', desc:'กาแฟเข้มข้น หอมกลมกล่อม', price:55, emoji:'☕', soldOut:false },
-  { id:2, cat:'coffee', name:'Latte', desc:'กาแฟผสมนมสด นุ่มละมุน', price:75, emoji:'🥛', soldOut:false },
-  { id:3, cat:'coffee', name:'Cappuccino', desc:'โฟมนมหนานุ่ม บาลานซ์ดี', price:75, emoji:'☕', soldOut:false },
-  { id:4, cat:'coffee', name:'Cold Brew', desc:'ชงเย็น 12 ชั่วโมง หวานธรรมชาติ', price:85, emoji:'🧊', soldOut:false },
-  { id:5, cat:'coffee', name:'Americano', desc:'กาแฟดำใส่น้ำร้อน เข้มกำลังดี', price:60, emoji:'☕', soldOut:false },
-  { id:6, cat:'coffee', name:'Mocha', desc:'กาแฟผสมช็อกโกแลต หวานนิดๆ', price:85, emoji:'🍫', soldOut:false },
-  // TEA
-  { id:7, cat:'tea', name:'ชาไทย', desc:'ชาไทยต้นตำรับ หอมเครื่องเทศ', price:55, emoji:'🧡', soldOut:false },
-  { id:8, cat:'tea', name:'Matcha Latte', desc:'มัทฉะญี่ปุ่นแท้ ผสมนมสด', price:85, emoji:'🍵', soldOut:false },
-  { id:9, cat:'tea', name:'Earl Grey', desc:'ชาเอิร์ลเกรย์หอมมะกรูด', price:65, emoji:'🫖', soldOut:false },
-  { id:10, cat:'tea', name:'Oolong ร้อน', desc:'ชาอูหลงนำเข้า หอมดอกไม้', price:70, emoji:'🌸', soldOut:true },
-  // SMOOTHIE
-  { id:11, cat:'smoothie', name:'Mango Smoothie', desc:'มะม่วงสดปั่น หวานหอม', price:80, emoji:'🥭', soldOut:false },
-  { id:12, cat:'smoothie', name:'Berry Blast', desc:'เบอร์รี่รวม วิตามินสูง', price:85, emoji:'🫐', soldOut:false },
-  { id:13, cat:'smoothie', name:'Banana Oat', desc:'กล้วยหอม+โอ๊ต อิ่มนาน', price:80, emoji:'🍌', soldOut:false },
-  { id:14, cat:'smoothie', name:'Green Detox', desc:'ผักโขม แอปเปิ้ล ขิง', price:90, emoji:'🥬', soldOut:false },
-  // FOOD
-  { id:15, cat:'food', name:'ครัวซองต์เนย', desc:'อบสดใหม่ทุกเช้า กรอบนอกนุ่มใน', price:65, emoji:'🥐', soldOut:false },
-  { id:16, cat:'food', name:'แซนวิชทูน่า', desc:'ทูน่าสด ผักสด ขนมปังโฮล', price:95, emoji:'🥪', soldOut:false },
-  { id:17, cat:'food', name:'ไข่ดาว+ข้าว', desc:'ไข่ดาวสองฟอง พร้อมข้าวสวย', price:75, emoji:'🍳', soldOut:false },
-  { id:18, cat:'food', name:'พาสต้าครีม', desc:'พาสต้าครีมเบคอน เข้มข้น', price:135, emoji:'🍝', soldOut:false },
-  { id:19, cat:'food', name:'ข้าวต้มมัดไส้กล้วย', desc:'ขนมไทยโบราณ หวานมันส์', price:45, emoji:'🍡', soldOut:true },
-  // DESSERT
-  { id:20, cat:'dessert', name:'Cheesecake', desc:'ชีสเค้กนิวยอร์ก ครีมมี่', price:110, emoji:'🍰', soldOut:false },
-  { id:21, cat:'dessert', name:'บราวนี่ช็อกโกแลต', desc:'ช็อกโกแลตเข้มข้น ขอบกรอบ', price:75, emoji:'🍫', soldOut:false },
-  { id:22, cat:'dessert', name:'Panna Cotta', desc:'พานาคอตต้า ราดซอสเบอร์รี่', price:95, emoji:'🍮', soldOut:false },
-  { id:23, cat:'dessert', name:'ไอศกรีมวานิลลา', desc:'ไอศกรีม 2 สกูป พร้อมท็อปปิ้ง', price:80, emoji:'🍨', soldOut:false },
-];
+const MENU_URL = 'https://script.google.com/macros/s/AKfycbyEWAGAms6x31GuxA29Ds6PUkKhdTtnKuuzAog6dwrhdnIaGthEIVzlDneiSH7OWj0X/exec';
 
+const catEmoji = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
+const catDefault = { coffee:'☕', tea:'🍵', smoothie:'🥤', food:'🥐', dessert:'🍰' };
+const catNames = { coffee:'☕ กาแฟ', tea:'🍵 ชา', smoothie:'🥤 สมูทตี้', food:'🥐 อาหาร', dessert:'🍰 ของหวาน' };
+
+let menuData = [];
 let cart = {};
 let currentCat = 'all';
+
+// โหลดเมนูจาก Google Sheet
+async function loadMenu() {
+  document.getElementById('menuSection').innerHTML = `
+    <div style="text-align:center;padding:60px 20px;color:var(--brown-light);">
+      <div style="font-size:2rem;margin-bottom:12px;">☕</div>
+      <div>กำลังโหลดเมนู...</div>
+    </div>`;
+  try {
+    const res = await fetch(MENU_URL);
+    const data = await res.json();
+    menuData = data.map(row => ({
+      id: Number(row.id),
+      name: row.name || '',
+      desc: row.desc || '',
+      price: Number(row.price) || 0,
+      cat: (row.category || '').toLowerCase().trim(),
+      soldOut: String(row.soldOut).toUpperCase() === 'TRUE',
+      image: row.image || '',
+      emoji: catDefault[row.category] || '🍽️'
+    }));
+    renderMenu();
+  } catch(err) {
+    document.getElementById('menuSection').innerHTML = `
+      <div style="text-align:center;padding:60px 20px;color:#c0392b;">
+        <div style="font-size:2rem;margin-bottom:12px;">⚠️</div>
+        <div>โหลดเมนูไม่สำเร็จ</div>
+        <div style="font-size:0.8rem;margin-top:8px;color:var(--brown-light);">กรุณารีเฟรชหน้านี้ใหม่ครับ</div>
+        <button onclick="loadMenu()" style="margin-top:16px;background:var(--brown-dark);color:var(--cream);border:none;border-radius:8px;padding:10px 20px;font-family:'Sarabun',sans-serif;font-size:0.9rem;cursor:pointer;">🔄 ลองอีกครั้ง</button>
+      </div>`;
+  }
+}
 
 function filterCat(cat, btn) {
   currentCat = cat;
@@ -498,22 +506,24 @@ function renderMenu() {
   const items = currentCat === 'all' ? menuData : menuData.filter(m => m.cat === currentCat);
 
   const cats = currentCat === 'all'
-    ? ['coffee','tea','smoothie','food','dessert']
+    ? [...new Set(menuData.map(m => m.cat))]
     : [currentCat];
-
-  const catNames = { coffee:'☕ กาแฟ', tea:'🍵 ชา', smoothie:'🥤 สมูทตี้', food:'🥐 อาหาร', dessert:'🍰 ของหวาน' };
 
   let html = '';
   cats.forEach(cat => {
     const catItems = items.filter(m => m.cat === cat);
     if (!catItems.length) return;
-    html += `<div class="section-title">${catNames[cat]}</div><div class="menu-grid">`;
+    const label = catNames[cat] || ('🍽️ ' + cat);
+    html += `<div class="section-title">${label}</div><div class="menu-grid">`;
     catItems.forEach(item => {
       const inCart = cart[item.id] ? cart[item.id].qty > 0 : false;
+      const imgHtml = item.image
+        ? `<img src="${item.image}" alt="${item.name}" style="width:100%;aspect-ratio:4/3;object-fit:cover;display:block;" onerror="this.parentElement.innerHTML='<div class=\\'img-placeholder\\'>${item.emoji}</div>'">`
+        : `<div class="img-placeholder">${item.emoji}</div>`;
       html += `
         <div class="menu-card ${item.soldOut ? 'sold-out' : ''}">
           ${item.soldOut ? '<div class="sold-out-badge">หมด</div>' : ''}
-          <div class="img-placeholder">${item.emoji}</div>
+          ${imgHtml}
           <div class="menu-info">
             <div class="menu-name">${item.name}</div>
             <div class="menu-desc">${item.desc}</div>
@@ -526,6 +536,8 @@ function renderMenu() {
     });
     html += '</div><br>';
   });
+
+  if (!html) html = `<div style="text-align:center;padding:40px;color:var(--brown-light);">ไม่มีเมนูในหมวดนี้</div>`;
   section.innerHTML = html;
 }
 
@@ -630,15 +642,16 @@ function resetOrder() {
   document.getElementById('tableSelect').value = '';
   updateCartBar();
   document.getElementById('successOverlay').classList.remove('show');
-  renderMenu();
+  loadMenu();
 }
-
-renderMenu();
 
 // Auto-select table from QR Code URL ?table=X
 const urlParams = new URLSearchParams(window.location.search);
 const tableParam = urlParams.get('table');
 if (tableParam) document.getElementById('tableSelect').value = tableParam;
+
+// โหลดเมนูจาก Google Sheet
+loadMenu();
 </script>
 </body>
 </html>
