@@ -345,7 +345,7 @@
 <div class="new-alert" id="newAlert">🔔 มีออเดอร์ใหม่!</div>
 
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzBHskJaFhq3_iiRAVBcwpeTLwplDdhee-0YyaFN-6UFeIqUWk-4Evfyhmob5FwP6ku/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5I8XbCwxc9rnjF1kN5VclevV0tWOzluMDf8jJaz2omneEOa3zH6sXRc-51pmHugQZ/exec';
 
 let allOrders = [];
 let currentFilter = 'all';
@@ -420,13 +420,13 @@ function renderOrders() {
 
     let btns = '';
     if (order.status === 'รอดำเนินการ') {
-      btns = `<button class="action-btn btn-cooking" onclick="updateStatus(this, '${order.timestamp}', '${order.table}', 'กำลังทำ')">🔥 เริ่มทำ</button>`;
+      btns = `<button class="action-btn btn-cooking" onclick="updateStatus(this, ${order.rowIndex}, 'กำลังทำ')">🔥 เริ่มทำ</button>`;
     } else if (order.status === 'กำลังทำ') {
       btns = `
-        <button class="action-btn btn-waiting" onclick="updateStatus(this, '${order.timestamp}', '${order.table}', 'รอดำเนินการ')">↩ ย้อนกลับ</button>
-        <button class="action-btn btn-done" onclick="updateStatus(this, '${order.timestamp}', '${order.table}', 'เสร็จแล้ว')">✅ เสร็จ</button>`;
+        <button class="action-btn btn-waiting" onclick="updateStatus(this, ${order.rowIndex}, 'รอดำเนินการ')">↩ ย้อนกลับ</button>
+        <button class="action-btn btn-done" onclick="updateStatus(this, ${order.rowIndex}, 'เสร็จแล้ว')">✅ เสร็จ</button>`;
     } else {
-      btns = `<button class="action-btn btn-waiting" onclick="updateStatus(this, '${order.timestamp}', '${order.table}', 'รอดำเนินการ')">↩ เปิดใหม่</button>`;
+      btns = `<button class="action-btn btn-waiting" onclick="updateStatus(this, ${order.rowIndex}, 'รอดำเนินการ')">↩ เปิดใหม่</button>`;
     }
 
     return `
@@ -447,26 +447,30 @@ function renderOrders() {
   }).join('');
 }
 
-function updateStatus(btn, timestamp, table, newStatus) {
+function updateStatus(btn, rowIndex, newStatus) {
   btn.disabled = true;
   btn.textContent = '⏳...';
 
-  fetch(SCRIPT_URL, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'updateStatus', timestamp, table, status: newStatus })
-  }).then(() => {
-    // อัปเดต local state ทันที
-    const order = allOrders.find(o => String(o.timestamp) === String(timestamp) && o.table === table);
-    if (order) order.status = newStatus;
-    updateStats();
-    renderOrders();
-    showToast(`อัปเดตสถานะเป็น "${newStatus}" แล้วครับ ✓`);
-  }).catch(() => {
+  window._updateCallback = function(result) {
+    if (result.success) {
+      const order = allOrders.find(o => o.rowIndex === rowIndex);
+      if (order) order.status = newStatus;
+      updateStats();
+      renderOrders();
+      showToast(`อัปเดตสถานะเป็น "${newStatus}" แล้วครับ ✓`);
+    } else {
+      showToast('❌ อัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง');
+      btn.disabled = false;
+    }
+  };
+
+  const script = document.createElement('script');
+  script.src = `${SCRIPT_URL}?action=updateStatus&rowIndex=${rowIndex}&status=${encodeURIComponent(newStatus)}&callback=_updateCallback&t=${Date.now()}`;
+  script.onerror = () => {
     showToast('❌ อัปเดตไม่สำเร็จ ลองใหม่อีกครั้ง');
     btn.disabled = false;
-  });
+  };
+  document.body.appendChild(script);
 }
 
 function showToast(msg) {
