@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>เช็คบิล — Baan Café</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f7f5f2;
+  --white:#ffffff;
+  --border:#e8e4de;
+  --text:#1c1917;
+  --sub:#a09589;
+  --accent:#c97941;
+  --accent-bg:#fdf6ee;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --red:#dc2626;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* HEADER */
+.header{background:var(--white);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--text);}
+.logo span{color:var(--accent);}
+.logo-sub{font-size:0.62rem;color:var(--sub);letter-spacing:0.1em;text-transform:uppercase;margin-top:1px;}
+
+/* TABLE SELECTOR */
+.selector-wrap{padding:28px 24px 0;}
+.selector-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:24px;}
+.selector-title{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:6px;}
+.selector-sub{font-size:0.8rem;color:var(--sub);margin-bottom:20px;}
+.table-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
+.table-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px 8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;text-align:center;}
+.table-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg);}
+.table-btn.active{background:var(--text);border-color:var(--text);color:#fff;}
+.open-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:14px;font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+.open-btn:active{opacity:0.8;}
+.open-btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* BILL */
+.bill-wrap{padding:24px;}
+.bill-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;max-width:480px;margin:0 auto;}
+
+/* BILL HEADER */
+.bill-head{padding:24px 24px 20px;text-align:center;border-bottom:1px solid var(--border);}
+.bill-cafe{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--text);}
+.bill-cafe span{color:var(--accent);}
+.bill-table{display:inline-block;background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:0.82rem;border:1px solid #e8c9a0;border-radius:20px;padding:4px 16px;margin:10px 0 4px;}
+.bill-date{font-size:0.72rem;color:var(--sub);}
+
+/* ORDERS */
+.bill-orders{padding:0 24px;}
+.order-round{margin:16px 0;}
+.round-label{font-size:0.62rem;font-weight:600;color:var(--sub);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.round-label::after{content:'';flex:1;height:1px;background:var(--border);}
+.item-row{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border);}
+.item-row:last-child{border-bottom:none;}
+.item-name{font-size:0.88rem;color:var(--text);flex:1;}
+.item-qty{font-size:0.78rem;color:var(--sub);margin:0 12px;white-space:nowrap;}
+.item-price{font-size:0.88rem;font-weight:600;color:var(--text);white-space:nowrap;}
+
+/* SUMMARY */
+.bill-summary{margin:0 24px;border-top:1.5px solid var(--border);padding:16px 0;}
+.sum-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:0.85rem;color:var(--sub);}
+.sum-row.total{font-size:1.1rem;font-weight:700;color:var(--text);padding-top:12px;border-top:1px solid var(--border);margin-top:8px;}
+.sum-row.total span:last-child{color:var(--accent);}
+
+/* ACTIONS */
+.bill-actions{padding:16px 24px 24px;display:flex;gap:10px;}
+.act-btn{flex:1;border:none;border-radius:14px;padding:13px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+.act-btn:active{opacity:0.8;}
+.btn-paid{background:var(--green);color:#fff;}
+.btn-print{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
+.btn-back{background:var(--bg);color:var(--text);border:1.5px solid var(--border);width:100%;}
+
+/* PAID SCREEN */
+.paid-screen{display:none;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;gap:12px;}
+.paid-screen.show{display:flex;}
+.paid-icon{font-size:3rem;animation:pop 0.4s ease;}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.18)}100%{transform:scale(1)}}
+.paid-h{font-family:'DM Serif Display',serif;font-size:1.4rem;}
+.paid-amt{font-size:2rem;font-weight:700;color:var(--green);}
+.paid-sub{font-size:0.8rem;color:var(--sub);line-height:1.7;}
+
+/* STATE */
+.state{text-align:center;padding:64px 20px;color:var(--sub);}
+.state .ico{font-size:2rem;margin-bottom:12px;}
+.state-btn{margin-top:14px;background:var(--text);color:#fff;border:none;border-radius:12px;padding:10px 22px;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;}
+
+/* PRINT */
+@media print{
+  .header,.selector-wrap,.bill-actions,.btn-back{display:none!important;}
+  body{background:white;}
+  .bill-wrap{padding:0;}
+  .bill-card{border:none;border-radius:0;box-shadow:none;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="logo">Baan <span>Café</span></div>
+    <div class="logo-sub">Bill</div>
+  </div>
+  <button class="act-btn btn-back" style="width:auto;padding:7px 16px;font-size:0.78rem;" onclick="showSelector()" id="backBtn" hidden>← เลือกโต๊ะใหม่</button>
+</div>
+
+<!-- TABLE SELECTOR -->
+<div class="selector-wrap" id="selectorWrap">
+  <div class="selector-card">
+    <div class="selector-title">เลือกโต๊ะ</div>
+    <div class="selector-sub">เลือกโต๊ะที่ต้องการเช็คบิลครับ</div>
+    <div class="table-grid" id="tableGrid"></div>
+    <button class="open-btn" id="openBillBtn" onclick="openBill()" disabled>เปิดบิล →</button>
+  </div>
+</div>
+
+<!-- BILL -->
+<div class="bill-wrap" id="billWrap" hidden>
+  <div class="bill-card">
+    <div class="bill-head">
+      <div class="bill-cafe">Baan <span>Café</span></div>
+      <div class="bill-table" id="billTable"></div>
+      <div class="bill-date" id="billDate"></div>
+    </div>
+
+    <div class="bill-orders" id="billOrders"></div>
+
+    <div class="bill-summary" id="billSummary"></div>
+
+    <div class="bill-actions" id="billActions">
+      <button class="act-btn btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+      <button class="act-btn btn-paid" onclick="markPaid()">✓ ชำระแล้ว</button>
+    </div>
+
+    <div class="paid-screen" id="paidScreen">
+      <div class="paid-icon">🎉</div>
+      <div class="paid-h">ชำระเงินแล้ว</div>
+      <div class="paid-amt" id="paidAmt"></div>
+      <div class="paid-sub">ขอบคุณที่ใช้บริการครับ<br>แวะมาใหม่นะครับ ☕</div>
+      <button class="act-btn btn-back" style="margin-top:8px;" onclick="showSelector()">เช็คบิลโต๊ะอื่น</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5I8XbCwxc9rnjF1kN5VclevV0tWOzluMDf8jJaz2omneEOa3zH6sXRc-51pmHugQZ/exec';
+const TABLES = 8;
+let selectedTable = null;
+let allOrders = [];
+
+// สร้างปุ่มโต๊ะ
+function initTables() {
+  const grid = document.getElementById('tableGrid');
+  for (let i = 1; i <= TABLES; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'table-btn';
+    btn.textContent = `โต๊ะ ${i}`;
+    btn.onclick = () => selectTable(i, btn);
+    grid.appendChild(btn);
+  }
+}
+
+function selectTable(n, btn) {
+  selectedTable = n;
+  document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('openBillBtn').disabled = false;
+}
+
+function openBill() {
+  if (!selectedTable) return;
+  document.getElementById('openBillBtn').textContent = 'กำลังโหลด...';
+  document.getElementById('openBillBtn').disabled = true;
+
+  window._ordersCallback = function(data) {
+    allOrders = data;
+    renderBill();
+    document.getElementById('openBillBtn').textContent = 'เปิดบิล →';
+    document.getElementById('openBillBtn').disabled = false;
+  };
+
+  const s = document.createElement('script');
+  s.src = `${SCRIPT_URL}?type=orders&callback=_ordersCallback&t=${Date.now()}`;
+  s.onerror = () => {
+    alert('โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่ครับ');
+    document.getElementById('openBillBtn').textContent = 'เปิดบิล →';
+    document.getElementById('openBillBtn').disabled = false;
+  };
+  document.body.appendChild(s);
+}
+
+function renderBill() {
+  const tableLabel = `โต๊ะ ${selectedTable}`;
+  const tableOrders = allOrders
+    .filter(o => o.table === tableLabel && o.status !== 'ชำระแล้ว')
+    .reverse(); // เรียงจากเก่าสุด
+
+  if (!tableOrders.length) {
+    document.getElementById('billOrders').innerHTML = `<div class="state"><div class="ico">🧾</div><div>ไม่พบออเดอร์ของ${tableLabel}</div></div>`;
+    document.getElementById('billSummary').innerHTML = '';
+    document.getElementById('billActions').hidden = true;
+  } else {
+    // แสดงออเดอร์แยกรอบ
+    let ordersHtml = '';
+    let grandTotal = 0;
+    let allItems = {};
+
+    tableOrders.forEach((order, i) => {
+      const items = (order.items || '').split(',').map(s => s.trim()).filter(Boolean);
+      const total = parseInt((order.total || '0').replace(/[^0-9]/g, '')) || 0;
+      grandTotal += total;
+
+      ordersHtml += `<div class="order-round">
+        <div class="round-label">รอบที่ ${i + 1} · ${formatTime(order.timestamp)}</div>`;
+
+      items.forEach(item => {
+        const match = item.match(/^(.+)\s+x(\d+)$/);
+        const name = match ? match[1].trim() : item;
+        const qty = match ? parseInt(match[2]) : 1;
+        if (!allItems[name]) allItems[name] = 0;
+        allItems[name] += qty;
+        ordersHtml += `<div class="item-row">
+          <span class="item-name">${name}</span>
+          <span class="item-qty">×${qty}</span>
+          <span class="item-price">${order.total && items.length === 1 ? order.total : '—'}</span>
+        </div>`;
+      });
+      ordersHtml += `</div>`;
+    });
+
+    document.getElementById('billOrders').innerHTML = ordersHtml;
+
+    // Summary
+    const vat = Math.round(grandTotal * 0.07);
+    document.getElementById('billSummary').innerHTML = `
+      <div class="sum-row"><span>จำนวน ${tableOrders.length} รอบ</span><span>${tableOrders.length} ออเดอร์</span></div>
+      <div class="sum-row"><span>ยอดก่อน VAT</span><span>฿${(grandTotal - vat).toLocaleString()}</span></div>
+      <div class="sum-row"><span>VAT 7%</span><span>฿${vat.toLocaleString()}</span></div>
+      <div class="sum-row total"><span>ยอดรวมทั้งหมด</span><span>฿${grandTotal.toLocaleString()}</span></div>`;
+
+    document.getElementById('billActions').hidden = false;
+    document.getElementById('paidScreen').classList.remove('show');
+    document.getElementById('paidAmt').textContent = `฿${grandTotal.toLocaleString()}`;
+  }
+
+  // แสดงหัวบิล
+  document.getElementById('billTable').textContent = tableLabel;
+  document.getElementById('billDate').textContent = new Date().toLocaleString('th-TH', {
+    timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short'
+  });
+
+  document.getElementById('selectorWrap').hidden = true;
+  document.getElementById('billWrap').hidden = false;
+  document.getElementById('backBtn').hidden = false;
+}
+
+function formatTime(ts) {
+  if (!ts) return '';
+  try {
+    const d = new Date(ts);
+    if (isNaN(d)) return ts;
+    return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+  } catch { return ts; }
+}
+
+function markPaid() {
+  // อัปเดตสถานะทุกออเดอร์ของโต๊ะนี้เป็น "ชำระแล้ว"
+  const tableLabel = `โต๊ะ ${selectedTable}`;
+  const tableOrders = allOrders.filter(o => o.table === tableLabel && o.status !== 'ชำระแล้ว');
+
+  tableOrders.forEach(order => {
+    const s = document.createElement('script');
+    s.src = `${SCRIPT_URL}?action=updateStatus&rowIndex=${order.rowIndex}&status=${encodeURIComponent('ชำระแล้ว')}&callback=_noop&t=${Date.now()}`;
+    document.body.appendChild(s);
+  });
+  window._noop = () => {};
+
+  document.getElementById('billActions').hidden = true;
+  document.getElementById('paidScreen').classList.add('show');
+}
+
+function showSelector() {
+  document.getElementById('selectorWrap').hidden = false;
+  document.getElementById('billWrap').hidden = true;
+  document.getElementById('backBtn').hidden = true;
+  selectedTable = null;
+  document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('openBillBtn').disabled = true;
+}
+
+initTables();
+</script>
+</body>
+</html>
