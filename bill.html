@@ -201,7 +201,8 @@ function renderBill() {
     .filter(o => {
       const t = String(o.table || '');
       const s = String(o.status || '');
-      return t.includes(`โต๊ะ ${tableNum}`) && s !== 'ชำระแล้ว';
+      // match เลขโต๊ะตรงๆ ไม่สนใจ encoding ภาษาไทย
+      return t.endsWith(tableNum) && s !== 'ชำระแล้ว';
     })
     .reverse();
 
@@ -281,7 +282,7 @@ function markPaid() {
   const tableOrders = allOrders.filter(o => {
     const t = String(o.table || '');
     const s = String(o.status || '');
-    return t.includes(`โต๊ะ ${tableNum}`) && s !== 'ชำระแล้ว';
+    return t.endsWith(tableNum) && s !== 'ชำระแล้ว';
   });
 
   tableOrders.forEach(order => {
