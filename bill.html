@@ -197,11 +197,11 @@ function openBill() {
 
 function renderBill() {
   const tableNum = String(selectedTable);
-  // รองรับทั้ง "โต๊ะ 1", "โต๊ะโต๊ะ 1", "1" ฯลฯ
   const tableOrders = allOrders
     .filter(o => {
       const t = String(o.table || '');
-      return t.includes(tableNum) && o.status !== 'ชำระแล้ว';
+      const s = String(o.status || '');
+      return t.includes(`โต๊ะ ${tableNum}`) && s !== 'ชำระแล้ว';
     })
     .reverse();
 
@@ -280,7 +280,8 @@ function markPaid() {
   const tableNum = String(selectedTable);
   const tableOrders = allOrders.filter(o => {
     const t = String(o.table || '');
-    return t.includes(tableNum) && o.status !== 'ชำระแล้ว';
+    const s = String(o.status || '');
+    return t.includes(`โต๊ะ ${tableNum}`) && s !== 'ชำระแล้ว';
   });
 
   tableOrders.forEach(order => {
