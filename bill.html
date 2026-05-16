@@ -204,7 +204,10 @@ function renderBill() {
     })
     .reverse();
 
-  const tableLabel = `โต๊ะ ${selectedTable}`;
+  // ใช้ชื่อโต๊ะจากข้อมูลจริงใน Sheet
+  const tableLabel = tableOrders.length > 0
+    ? tableOrders[0].table
+    : `โต๊ะ ${selectedTable}`;
 
   if (!tableOrders.length) {
     document.getElementById('billOrders').innerHTML = `<div class="state"><div class="ico">🧾</div><div>ไม่พบออเดอร์ของ${tableLabel}</div></div>`;
