@@ -200,13 +200,9 @@ function renderBill() {
   const tableOrders = allOrders
     .filter(o => {
       const t = String(o.table || '');
-      const s = String(o.status || '');
-      return t.endsWith(tableNum) && s !== 'ชำระแล้ว';
+      return t.endsWith(tableNum) && String(o.status || '') !== 'ชำระแล้ว';
     })
     .reverse();
-
-  // DEBUG
-  alert(`โต๊ะที่เลือก: "${tableNum}"\nออเดอร์ทั้งหมด: ${allOrders.length} รายการ\nหาเจอ: ${tableOrders.length} รายการ\n\nตัวอย่าง table field:\n${allOrders.slice(0,3).map(o=>`"${o.table}"`).join('\n')}`);
 
   const tableLabel = `โต๊ะ ${selectedTable}`;
 
