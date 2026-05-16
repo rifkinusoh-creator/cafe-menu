@@ -196,10 +196,16 @@ function openBill() {
 }
 
 function renderBill() {
-  const tableLabel = `โต๊ะ ${selectedTable}`;
+  const tableNum = String(selectedTable);
+  // รองรับทั้ง "โต๊ะ 1", "โต๊ะโต๊ะ 1", "1" ฯลฯ
   const tableOrders = allOrders
-    .filter(o => o.table === tableLabel && o.status !== 'ชำระแล้ว')
-    .reverse(); // เรียงจากเก่าสุด
+    .filter(o => {
+      const t = String(o.table || '');
+      return t.includes(tableNum) && o.status !== 'ชำระแล้ว';
+    })
+    .reverse();
+
+  const tableLabel = `โต๊ะ ${selectedTable}`;
 
   if (!tableOrders.length) {
     document.getElementById('billOrders').innerHTML = `<div class="state"><div class="ico">🧾</div><div>ไม่พบออเดอร์ของ${tableLabel}</div></div>`;
@@ -271,8 +277,11 @@ function formatTime(ts) {
 
 function markPaid() {
   // อัปเดตสถานะทุกออเดอร์ของโต๊ะนี้เป็น "ชำระแล้ว"
-  const tableLabel = `โต๊ะ ${selectedTable}`;
-  const tableOrders = allOrders.filter(o => o.table === tableLabel && o.status !== 'ชำระแล้ว');
+  const tableNum = String(selectedTable);
+  const tableOrders = allOrders.filter(o => {
+    const t = String(o.table || '');
+    return t.includes(tableNum) && o.status !== 'ชำระแล้ว';
+  });
 
   tableOrders.forEach(order => {
     const s = document.createElement('script');
