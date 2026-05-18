@@ -108,6 +108,8 @@
   .stat.cooking .stat-num { color: var(--blue); }
   .stat.done { border-color: #bbf7d0; background: var(--green-bg); }
   .stat.done .stat-num { color: var(--green); }
+  .stat.paid { border-color: #ddd6fe; background: #f5f3ff; }
+  .stat.paid .stat-num { color: #7c3aed; }
   .stat.total .stat-num { color: var(--accent); }
 
   /* FILTER */
@@ -159,6 +161,7 @@
   .order-card.waiting { border-left: 4px solid var(--orange); }
   .order-card.cooking { border-left: 4px solid var(--blue); }
   .order-card.done { border-left: 4px solid var(--green); opacity: 0.6; }
+  .order-card.paid { border-left: 4px solid #7c3aed; opacity: 0.45; }
 
   .card-header {
     display: flex;
@@ -179,6 +182,7 @@
   .status-badge.waiting { background: var(--orange-bg); color: var(--orange); border: 1px solid #fed7aa; }
   .status-badge.cooking { background: var(--blue-bg); color: var(--blue); border: 1px solid #bfdbfe; }
   .status-badge.done { background: var(--green-bg); color: var(--green); border: 1px solid #bbf7d0; }
+  .status-badge.paid { background: #f5f3ff; color: #7c3aed; border: 1px solid #ddd6fe; }
 
   .card-items {
     padding: 12px 16px;
@@ -303,6 +307,10 @@
     <div class="stat-num" id="stat-done">0</div>
     <div class="stat-label">✅ เสร็จแล้ว</div>
   </div>
+  <div class="stat paid">
+    <div class="stat-num" id="stat-paid">0</div>
+    <div class="stat-label">💳 ชำระแล้ว</div>
+  </div>
   <div class="stat total">
     <div class="stat-num" id="stat-total">0</div>
     <div class="stat-label">📋 ทั้งหมดวันนี้</div>
@@ -315,6 +323,7 @@
   <button class="filter-btn" onclick="setFilter('รอดำเนินการ', this)">⏳ รอดำเนินการ</button>
   <button class="filter-btn" onclick="setFilter('กำลังทำ', this)">🔥 กำลังทำ</button>
   <button class="filter-btn" onclick="setFilter('เสร็จแล้ว', this)">✅ เสร็จแล้ว</button>
+  <button class="filter-btn" onclick="setFilter('ชำระแล้ว', this)">💳 ชำระแล้ว</button>
 </div>
 
 <!-- ORDERS -->
@@ -342,16 +351,28 @@ let isFirstLoad = true;
 const statusMap = {
   'รอดำเนินการ': 'waiting',
   'กำลังทำ': 'cooking',
-  'เสร็จแล้ว': 'done'
+  'เสร็จแล้ว': 'done',
+  'ชำระแล้ว': 'paid'
 };
+
+function isToday(timestamp) {
+  try {
+    const d = new Date(timestamp);
+    const now = new Date();
+    return d.getFullYear() === now.getFullYear()
+      && d.getMonth() === now.getMonth()
+      && d.getDate() === now.getDate();
+  } catch(e) { return false; }
+}
 
 function loadOrders() {
   window._ordersCallback = function(data) {
+    const todayOrders = data.filter(o => isToday(o.timestamp));
     const prev = allOrders.length;
-    allOrders = data;
+    allOrders = todayOrders;
     updateStats();
     renderOrders();
-    if (!isFirstLoad && data.length > prev) {
+    if (!isFirstLoad && todayOrders.length > prev) {
       showNewAlert();
     }
     isFirstLoad = false;
@@ -368,9 +389,11 @@ function updateStats() {
   const waiting = allOrders.filter(o => o.status === 'รอดำเนินการ').length;
   const cooking = allOrders.filter(o => o.status === 'กำลังทำ').length;
   const done = allOrders.filter(o => o.status === 'เสร็จแล้ว').length;
+  const paid = allOrders.filter(o => o.status === 'ชำระแล้ว').length;
   document.getElementById('stat-waiting').textContent = waiting;
   document.getElementById('stat-cooking').textContent = cooking;
   document.getElementById('stat-done').textContent = done;
+  document.getElementById('stat-paid').textContent = paid;
   document.getElementById('stat-total').textContent = allOrders.length;
 }
 
@@ -412,6 +435,8 @@ function renderOrders() {
       btns = `
         <button class="action-btn btn-waiting" onclick="updateStatus(this, ${order.rowIndex}, 'รอดำเนินการ')">↩ ย้อนกลับ</button>
         <button class="action-btn btn-done" onclick="updateStatus(this, ${order.rowIndex}, 'เสร็จแล้ว')">✅ เสร็จ</button>`;
+    } else if (order.status === 'ชำระแล้ว') {
+      btns = `<span style="font-size:0.75rem;color:#7c3aed;font-weight:600;">💳 ชำระแล้ว</span>`;
     } else {
       btns = `<button class="action-btn btn-waiting" onclick="updateStatus(this, ${order.rowIndex}, 'รอดำเนินการ')">↩ เปิดใหม่</button>`;
     }
