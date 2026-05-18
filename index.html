@@ -30,7 +30,25 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 
 .table-pill{display:flex;align-items:center;gap:6px;background:var(--accent-bg);border:1px solid #e8c9a0;border-radius:24px;padding:6px 14px;}
 .table-pill label{font-size:0.72rem;color:var(--accent);font-weight:600;letter-spacing:0.04em;}
-.table-select{background:none;border:none;outline:none;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;color:var(--text);cursor:pointer;}
+.table-num{font-size:0.88rem;font-weight:700;color:var(--text);}
+.no-table-pill{display:flex;align-items:center;gap:6px;background:#fff3cd;border:1px solid #ffc107;border-radius:24px;padding:6px 14px;}
+.no-table-pill span{font-size:0.72rem;color:#856404;font-weight:500;}
+
+/* NOTE MODAL */
+.note-overlay{position:fixed;inset:0;background:rgba(28,25,23,0.3);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity 0.2s;backdrop-filter:blur(4px);}
+.note-overlay.open{opacity:1;pointer-events:all;}
+.note-box{background:var(--white);border-radius:20px;padding:24px;width:100%;max-width:340px;}
+.note-item-name{font-family:'DM Serif Display',serif;font-size:1.1rem;margin-bottom:4px;}
+.note-item-price{font-size:0.8rem;color:var(--sub);margin-bottom:16px;}
+.note-label{font-size:0.72rem;font-weight:600;color:var(--sub);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;}
+.note-input{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--text);background:var(--bg);outline:none;resize:none;}
+.note-input:focus{border-color:var(--accent);}
+.note-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px;}
+.note-sug{background:var(--bg);border:1.5px solid var(--border);border-radius:20px;padding:4px 12px;font-size:0.75rem;color:var(--text);cursor:pointer;transition:all 0.15s;}
+.note-sug:hover{border-color:var(--accent);color:var(--accent);}
+.note-actions{display:flex;gap:8px;}
+.note-cancel{flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;cursor:pointer;}
+.note-confirm{flex:2;background:var(--text);color:#fff;border:none;border-radius:12px;padding:12px;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;cursor:pointer;}
 
 /* TABS */
 .tabs-row{overflow-x:auto;scrollbar-width:none;padding-bottom:14px;}
@@ -123,13 +141,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <div class="brand-name">Baan <span>Café</span></div>
       <div class="brand-sub">Order & Enjoy</div>
     </div>
-    <div class="table-pill">
-      <label>โต๊ะ</label>
-      <select class="table-select" id="tableSelect">
-        <option value="">เลือก</option>
-        <option>1</option><option>2</option><option>3</option><option>4</option>
-        <option>5</option><option>6</option><option>7</option><option>8</option>
-      </select>
+    <div id="tablePill">
+      <div class="no-table-pill"><span>⚠️ สแกน QR เพื่อระบุโต๊ะ</span></div>
     </div>
   </div>
   <div class="tabs-row">
@@ -140,6 +153,27 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
       <button class="tab" onclick="filterCat('smoothie',this)">สมูทตี้</button>
       <button class="tab" onclick="filterCat('food',this)">อาหาร</button>
       <button class="tab" onclick="filterCat('dessert',this)">ของหวาน</button>
+    </div>
+  </div>
+</div>
+
+<!-- NOTE MODAL -->
+<div class="note-overlay" id="noteOverlay">
+  <div class="note-box">
+    <div class="note-item-name" id="noteItemName"></div>
+    <div class="note-item-price" id="noteItemPrice"></div>
+    <div class="note-label">หมายเหตุ (ถ้ามี)</div>
+    <textarea class="note-input" id="noteInput" rows="2" placeholder="เช่น หวานน้อย, ไม่ใส่น้ำแข็ง..."></textarea>
+    <div class="note-suggestions">
+      <button class="note-sug" onclick="addSug('หวานน้อย')">หวานน้อย</button>
+      <button class="note-sug" onclick="addSug('ไม่หวาน')">ไม่หวาน</button>
+      <button class="note-sug" onclick="addSug('ไม่ใส่น้ำแข็ง')">ไม่ใส่น้ำแข็ง</button>
+      <button class="note-sug" onclick="addSug('นมน้อย')">นมน้อย</button>
+      <button class="note-sug" onclick="addSug('เพิ่มช็อต')">เพิ่มช็อต</button>
+    </div>
+    <div class="note-actions">
+      <button class="note-cancel" onclick="closeNote()">ยกเลิก</button>
+      <button class="note-confirm" onclick="confirmNote()">เพิ่มลงตะกร้า +</button>
     </div>
   </div>
 </div>
@@ -190,6 +224,16 @@ const catLabels  = {coffee:'กาแฟ',tea:'ชา',smoothie:'สมูทต
 const catEmoji   = {coffee:'☕',tea:'🍵',smoothie:'🥤',food:'🍽️',dessert:'🍰'};
 
 let menuData=[], cart={}, currentCat='all';
+let tableNo=''; // รับจาก QR เท่านั้น
+let pendingItemId=null;
+
+// รับโต๊ะจาก URL
+const urlTable = new URLSearchParams(location.search).get('table');
+if(urlTable){
+  tableNo = urlTable;
+  document.getElementById('tablePill').innerHTML =
+    `<div class="table-pill"><label>โต๊ะ</label><span class="table-num">${tableNo}</span></div>`;
+}
 
 function loadMenu() {
   document.getElementById('menuWrap').innerHTML='<div class="state"><div class="ico">☕</div><div>กำลังโหลดเมนู...</div></div>';
@@ -237,7 +281,7 @@ function renderMenu() {
           <div class="card-foot">
             <div class="card-price">฿${item.price}<small> บาท</small></div>
             ${!item.soldOut
-              ?`<button class="add-btn${ic?' in-cart':''}" onclick="addToCart(${item.id})" id="btn-${item.id}">${ic?'✓':'+'}</button>`
+              ?`<button class="add-btn${ic?' in-cart':''}" onclick="openNote(${item.id})" id="btn-${item.id}">${ic?'✓':'+'}</button>`
               :'<span style="font-size:0.68rem;color:var(--red)">หมด</span>'}
           </div>
         </div></div>`;
@@ -247,13 +291,36 @@ function renderMenu() {
   wrap.innerHTML=html||'<div class="state"><div class="ico">🍽️</div><div>ไม่มีเมนูในหมวดนี้</div></div>';
 }
 
-function addToCart(id) {
-  const item=menuData.find(m=>m.id===id); if(!item||item.soldOut) return;
-  if(!cart[id]) cart[id]={item,qty:0}; cart[id].qty++;
-  updateCartBar();
-  const btn=document.getElementById('btn-'+id);
-  if(btn){btn.textContent='✓';btn.classList.add('in-cart');}
+// NOTE MODAL
+function openNote(id) {
+  const item=menuData.find(m=>m.id===id); if(!item) return;
+  pendingItemId=id;
+  document.getElementById('noteItemName').textContent=item.name;
+  document.getElementById('noteItemPrice').textContent='฿'+item.price+' บาท';
+  document.getElementById('noteInput').value=cart[id]?.note||'';
+  document.getElementById('noteOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('noteInput').focus(),300);
 }
+function closeNote(){document.getElementById('noteOverlay').classList.remove('open');pendingItemId=null;}
+function addSug(txt){
+  const inp=document.getElementById('noteInput');
+  inp.value=inp.value?(inp.value+', '+txt):txt;
+}
+function confirmNote(){
+  if(!pendingItemId) return;
+  const note=document.getElementById('noteInput').value.trim();
+  const item=menuData.find(m=>m.id===pendingItemId);
+  if(!item) return;
+  if(!cart[pendingItemId]) cart[pendingItemId]={item,qty:0,note:''};
+  cart[pendingItemId].qty++;
+  cart[pendingItemId].note=note;
+  updateCartBar();
+  const btn=document.getElementById('btn-'+pendingItemId);
+  if(btn){btn.textContent='✓';btn.classList.add('in-cart');}
+  closeNote();
+}
+document.getElementById('noteOverlay').addEventListener('click',e=>{if(e.target.id==='noteOverlay')closeNote();});
+
 function updateCartBar() {
   const qty=Object.values(cart).reduce((s,v)=>s+v.qty,0);
   const price=Object.values(cart).reduce((s,v)=>s+v.qty*v.item.price,0);
@@ -268,7 +335,19 @@ function renderCartItems(){
   const total=entries.reduce((s,v)=>s+v.qty*v.item.price,0);
   document.getElementById('cartItems').innerHTML=!entries.length
     ?'<div class="empty-cart">ยังไม่มีรายการ</div>'
-    :entries.map(({item,qty})=>`<div class="ci"><div><div class="ci-name">${item.name}</div><div class="ci-sub">฿${item.price} × ${qty} = ฿${item.price*qty}</div></div><div class="qty-row"><button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button><span class="qty-n">${qty}</span><button class="qty-btn" onclick="changeQty(${item.id},1)">+</button></div></div>`).join('');
+    :entries.map(({item,qty,note})=>`
+      <div class="ci">
+        <div>
+          <div class="ci-name">${item.name}</div>
+          <div class="ci-sub">฿${item.price} × ${qty} = ฿${item.price*qty}</div>
+          ${note?`<div class="ci-sub" style="color:var(--accent)">📝 ${note}</div>`:''}
+        </div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button>
+          <span class="qty-n">${qty}</span>
+          <button class="qty-btn" onclick="changeQty(${item.id},1)">+</button>
+        </div>
+      </div>`).join('');
   document.getElementById('modalTotal').textContent=total;
 }
 function changeQty(id,d){
@@ -277,28 +356,30 @@ function changeQty(id,d){
   updateCartBar();renderCartItems();renderMenu();
 }
 async function placeOrder(){
-  const table=document.getElementById('tableSelect').value;
-  if(!table){alert('กรุณาเลือกโต๊ะก่อนครับ');return;}
+  if(!tableNo){alert('กรุณาสแกน QR Code หน้าโต๊ะก่อนสั่งอาหารครับ');return;}
   const entries=Object.values(cart).filter(v=>v.qty>0);
   if(!entries.length){alert('ยังไม่มีรายการในออเดอร์');return;}
   const btn=document.querySelector('.place-btn');
   btn.textContent='กำลังส่ง...';btn.disabled=true;
-  const itemsText=entries.map(({item,qty})=>`${item.name} x${qty}`).join(', ');
+  // รวม note ไว้ในชื่อเมนู
+  const itemsText=entries.map(({item,qty,note})=>{
+    const n=note?` (${note})`:'';
+    return `${item.name}${n} x${qty}`;
+  }).join(', ');
   const total=entries.reduce((s,v)=>s+v.qty*v.item.price,0);
   try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({table,items:itemsText,total})});
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:tableNo,items:itemsText,total})});
     document.getElementById('cartOverlay').classList.remove('open');
-    document.getElementById('successTable').textContent=`โต๊ะ ${table}`;
+    document.getElementById('successTable').textContent=`โต๊ะ ${tableNo}`;
     document.getElementById('successScreen').classList.add('show');
   }catch(e){alert('เกิดข้อผิดพลาด กรุณาลองใหม่ครับ');}
   finally{btn.textContent='สั่งอาหาร';btn.disabled=false;}
 }
 function resetOrder(){
-  cart={};document.getElementById('tableSelect').value='';
-  updateCartBar();document.getElementById('successScreen').classList.remove('show');loadMenu();
+  cart={};updateCartBar();
+  document.getElementById('successScreen').classList.remove('show');
+  loadMenu();
 }
-const p=new URLSearchParams(location.search).get('table');
-if(p) document.getElementById('tableSelect').value=p;
 loadMenu();
 </script>
 </body>
