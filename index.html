@@ -223,11 +223,10 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5I8XbCwxc9rnjF1kN5
 const catLabels  = {coffee:'กาแฟ',tea:'ชา',smoothie:'สมูทตี้',food:'อาหาร',dessert:'ของหวาน'};
 const catEmoji   = {coffee:'☕',tea:'🍵',smoothie:'🥤',food:'🍽️',dessert:'🍰'};
 
-let menuData=[], cart={}, currentCat='all';
-let tableNo=''; // รับจาก QR เท่านั้น
+let menuData=[], cart=[], currentCat='all';
+let tableNo='';
 let pendingItemId=null;
 
-// รับโต๊ะจาก URL
 const urlTable = new URLSearchParams(location.search).get('table');
 if(urlTable){
   tableNo = urlTable;
@@ -269,7 +268,7 @@ function renderMenu() {
     const ci=items.filter(m=>m.cat===cat); if(!ci.length) return;
     html+=`<div class="section-label">${catLabels[cat]||cat}</div><div class="menu-grid">`;
     ci.forEach(item=>{
-      const ic=cart[item.id]?.qty>0;
+      const count=cart.filter(c=>c.id===item.id).length;
       const img=item.image
         ?`<img class="card-img" src="${item.image}" alt="${item.name}" onerror="this.outerHTML='<div class=\\'card-img-ph\\'>${item.emoji}</div>'">`
         :`<div class="card-img-ph">${item.emoji}</div>`;
@@ -281,7 +280,7 @@ function renderMenu() {
           <div class="card-foot">
             <div class="card-price">฿${item.price}<small> บาท</small></div>
             ${!item.soldOut
-              ?`<button class="add-btn${ic?' in-cart':''}" onclick="openNote(${item.id})" id="btn-${item.id}">${ic?'✓':'+'}</button>`
+              ?`<button class="add-btn${count>0?' in-cart':''}" onclick="openNote(${item.id})" id="btn-${item.id}">${count>0?count:'+'}</button>`
               :'<span style="font-size:0.68rem;color:var(--red)">หมด</span>'}
           </div>
         </div></div>`;
@@ -291,13 +290,13 @@ function renderMenu() {
   wrap.innerHTML=html||'<div class="state"><div class="ico">🍽️</div><div>ไม่มีเมนูในหมวดนี้</div></div>';
 }
 
-// NOTE MODAL
+// NOTE MODAL — เพิ่มทีละชิ้น พร้อม note แยกกัน
 function openNote(id) {
   const item=menuData.find(m=>m.id===id); if(!item) return;
   pendingItemId=id;
   document.getElementById('noteItemName').textContent=item.name;
   document.getElementById('noteItemPrice').textContent='฿'+item.price+' บาท';
-  document.getElementById('noteInput').value=cart[id]?.note||'';
+  document.getElementById('noteInput').value='';
   document.getElementById('noteOverlay').classList.add('open');
   setTimeout(()=>document.getElementById('noteInput').focus(),300);
 }
@@ -311,19 +310,20 @@ function confirmNote(){
   const note=document.getElementById('noteInput').value.trim();
   const item=menuData.find(m=>m.id===pendingItemId);
   if(!item) return;
-  if(!cart[pendingItemId]) cart[pendingItemId]={item,qty:0,note:''};
-  cart[pendingItemId].qty++;
-  cart[pendingItemId].note=note;
+  // เพิ่มแต่ละชิ้นแยกกัน พร้อม note ของตัวเอง
+  const cartId = Date.now() + Math.random();
+  cart.push({cartId, id:item.id, item, note});
   updateCartBar();
   const btn=document.getElementById('btn-'+pendingItemId);
-  if(btn){btn.textContent='✓';btn.classList.add('in-cart');}
+  const count=cart.filter(c=>c.id===item.id).length;
+  if(btn){btn.textContent=count;btn.classList.add('in-cart');}
   closeNote();
 }
 document.getElementById('noteOverlay').addEventListener('click',e=>{if(e.target.id==='noteOverlay')closeNote();});
 
 function updateCartBar() {
-  const qty=Object.values(cart).reduce((s,v)=>s+v.qty,0);
-  const price=Object.values(cart).reduce((s,v)=>s+v.qty*v.item.price,0);
+  const qty=cart.length;
+  const price=cart.reduce((s,c)=>s+c.item.price,0);
   document.getElementById('cartCount').textContent=qty;
   document.getElementById('cartTotal').textContent=price;
   document.getElementById('cartBar').classList.toggle('hidden',qty===0);
@@ -331,42 +331,43 @@ function updateCartBar() {
 function openCart(){renderCartItems();document.getElementById('cartOverlay').classList.add('open');}
 document.getElementById('cartOverlay').addEventListener('click',e=>{if(e.target.id==='cartOverlay')e.target.classList.remove('open');});
 function renderCartItems(){
-  const entries=Object.values(cart).filter(v=>v.qty>0);
-  const total=entries.reduce((s,v)=>s+v.qty*v.item.price,0);
-  document.getElementById('cartItems').innerHTML=!entries.length
+  const total=cart.reduce((s,c)=>s+c.item.price,0);
+  document.getElementById('cartItems').innerHTML=!cart.length
     ?'<div class="empty-cart">ยังไม่มีรายการ</div>'
-    :entries.map(({item,qty,note})=>`
+    :cart.map((c,i)=>`
       <div class="ci">
-        <div>
-          <div class="ci-name">${item.name}</div>
-          <div class="ci-sub">฿${item.price} × ${qty} = ฿${item.price*qty}</div>
-          ${note?`<div class="ci-sub" style="color:var(--accent)">📝 ${note}</div>`:''}
+        <div style="flex:1">
+          <div class="ci-name">${c.item.name}</div>
+          <div class="ci-sub">฿${c.item.price}</div>
+          ${c.note?`<div class="ci-sub" style="color:var(--accent)">📝 ${c.note}</div>`:''}
         </div>
-        <div class="qty-row">
-          <button class="qty-btn" onclick="changeQty(${item.id},-1)">−</button>
-          <span class="qty-n">${qty}</span>
-          <button class="qty-btn" onclick="changeQty(${item.id},1)">+</button>
-        </div>
+        <button class="qty-btn" onclick="removeItem(${i})" style="color:var(--red);border-color:var(--red);">✕</button>
       </div>`).join('');
   document.getElementById('modalTotal').textContent=total;
 }
-function changeQty(id,d){
-  if(!cart[id])return; cart[id].qty=Math.max(0,cart[id].qty+d);
-  if(!cart[id].qty)delete cart[id];
-  updateCartBar();renderCartItems();renderMenu();
+function removeItem(i){
+  const id=cart[i].id;
+  cart.splice(i,1);
+  updateCartBar();renderCartItems();
+  // อัปเดตปุ่มในเมนู
+  const count=cart.filter(c=>c.id===id).length;
+  const btn=document.getElementById('btn-'+id);
+  if(btn){
+    btn.textContent=count||'+';
+    if(!count) btn.classList.remove('in-cart');
+  }
 }
 async function placeOrder(){
   if(!tableNo){alert('กรุณาสแกน QR Code หน้าโต๊ะก่อนสั่งอาหารครับ');return;}
-  const entries=Object.values(cart).filter(v=>v.qty>0);
-  if(!entries.length){alert('ยังไม่มีรายการในออเดอร์');return;}
+  if(!cart.length){alert('ยังไม่มีรายการในออเดอร์');return;}
   const btn=document.querySelector('.place-btn');
   btn.textContent='กำลังส่ง...';btn.disabled=true;
-  // รวม note ไว้ในชื่อเมนู
-  const itemsText=entries.map(({item,qty,note})=>{
-    const n=note?` (${note})`:'';
-    return `${item.name}${n} x${qty}`;
+  // แต่ละชิ้นแยกกัน พร้อม note ของตัวเอง
+  const itemsText=cart.map(c=>{
+    const n=c.note?` (${c.note})`:'';
+    return `${c.item.name}${n} x1`;
   }).join(', ');
-  const total=entries.reduce((s,v)=>s+v.qty*v.item.price,0);
+  const total=cart.reduce((s,c)=>s+c.item.price,0);
   try{
     await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({table:tableNo,items:itemsText,total})});
     document.getElementById('cartOverlay').classList.remove('open');
@@ -376,7 +377,7 @@ async function placeOrder(){
   finally{btn.textContent='สั่งอาหาร';btn.disabled=false;}
 }
 function resetOrder(){
-  cart={};updateCartBar();
+  cart=[];updateCartBar();
   document.getElementById('successScreen').classList.remove('show');
   loadMenu();
 }
