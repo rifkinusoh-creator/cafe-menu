@@ -357,11 +357,34 @@ const statusMap = {
 
 function isToday(timestamp) {
   try {
-    const d = new Date(timestamp);
     const now = new Date();
-    return d.getFullYear() === now.getFullYear()
-      && d.getMonth() === now.getMonth()
-      && d.getDate() === now.getDate();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+    const ts = String(timestamp || '');
+
+    // format: "2569-05-18T02:19:36.000Z" (ปีพุทธ) — แปลงเป็นปีคริสต์ก่อน
+    const buddhistMatch = ts.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (buddhistMatch) {
+      const year = parseInt(buddhistMatch[1]);
+      const month = buddhistMatch[2];
+      const day = buddhistMatch[3];
+      // ปีพุทธ = ปีคริสต์ + 543
+      const christianYear = year > 2400 ? year - 543 : year;
+      const dateStr = `${christianYear}-${month}-${day}`;
+      return dateStr === todayStr;
+    }
+
+    // format: "18/5/2569 14:30" (Thai locale string)
+    const thaiMatch = ts.match(/(\d+)\/(\d+)\/(\d+)/);
+    if (thaiMatch) {
+      const day = String(thaiMatch[1]).padStart(2,'0');
+      const month = String(thaiMatch[2]).padStart(2,'0');
+      const year = parseInt(thaiMatch[3]);
+      const christianYear = year > 2400 ? year - 543 : year;
+      return `${christianYear}-${month}-${day}` === todayStr;
+    }
+
+    return false;
   } catch(e) { return false; }
 }
 
