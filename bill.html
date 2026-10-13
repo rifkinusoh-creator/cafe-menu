@@ -4,240 +4,194 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>เช็คบิล — Baan Café</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@400;700&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-:root{
-  --bg:#f7f5f2;--white:#fff;--border:#e8e4de;--text:#1c1917;
-  --sub:#a09589;--accent:#c97941;--accent-bg:#fdf6ee;
-  --green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-.header{background:var(--white);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
-.logo{font-family:'DM Serif Display',serif;font-size:1.2rem;}
-.logo span{color:var(--accent);}
-.logo-sub{font-size:0.62rem;color:var(--sub);letter-spacing:0.1em;text-transform:uppercase;}
-.back-btn{background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:10px;padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;}
+:root{--bg:#f9f8f6;--white:#fff;--border:#ede9e3;--text:#18120a;--muted:#9e8f82;--brand:#2d6a4f;--brand-light:#e8f4ee;--green:#16a34a;--green-bg:#f0fdf4;}
+body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.hdr{background:var(--white);border-bottom:1px solid var(--border);padding:16px 22px;display:flex;align-items:center;justify-content:space-between;}
+.brand{font-family:'Noto Serif Thai',serif;font-size:1.2rem;font-weight:700;color:var(--brand);}
+.sub{font-size:.62rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;}
+.back-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:7px 16px;font-family:'Noto Sans Thai',sans-serif;font-size:.78rem;cursor:pointer;display:none;}
 
-/* SELECTOR */
-.selector-wrap{padding:28px 24px;}
-.selector-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:24px;}
-.sel-title{font-family:'DM Serif Display',serif;font-size:1.15rem;margin-bottom:4px;}
-.sel-sub{font-size:0.8rem;color:var(--sub);margin-bottom:20px;}
-.table-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
-.table-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px 8px;font-family:'DM Sans',sans-serif;font-size:0.9rem;font-weight:600;color:var(--text);cursor:pointer;transition:all 0.15s;}
-.table-btn.active{background:var(--text);border-color:var(--text);color:#fff;}
-.open-btn{width:100%;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:14px;font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:600;cursor:pointer;}
-.open-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.sel-wrap{padding:24px 22px;}
+.sel-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;padding:22px;}
+.sel-title{font-family:'Noto Serif Thai',serif;font-size:1.1rem;font-weight:700;margin-bottom:4px;}
+.sel-sub{font-size:.78rem;color:var(--muted);margin-bottom:18px;}
+.tbl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px;}
+.tbl-btn{background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:13px 8px;font-family:'Noto Sans Thai',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.tbl-btn.on{background:var(--brand);border-color:var(--brand);color:#fff;}
+.open-btn{width:100%;background:var(--brand);color:#fff;border:none;border-radius:14px;padding:14px;font-family:'Noto Sans Thai',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;}
+.open-btn:disabled{opacity:.4;cursor:not-allowed;}
 
-/* BILL */
-.bill-wrap{padding:24px;display:none;}
-.bill-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;max-width:480px;margin:0 auto;}
-.bill-head{padding:24px;text-align:center;border-bottom:1px solid var(--border);}
-.bill-cafe{font-family:'DM Serif Display',serif;font-size:1.4rem;}
-.bill-cafe span{color:var(--accent);}
-.bill-table-lbl{display:inline-block;background:var(--accent-bg);color:var(--accent);font-weight:700;font-size:0.82rem;border:1px solid #e8c9a0;border-radius:20px;padding:4px 16px;margin:10px 0 4px;}
-.bill-date{font-size:0.72rem;color:var(--sub);}
-.bill-orders{padding:0 24px;}
-.round-wrap{margin:16px 0;}
-.round-label{font-size:0.62rem;font-weight:600;color:var(--sub);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
-.round-label::after{content:'';flex:1;height:1px;background:var(--border);}
-.item-row{display:flex;align-items:baseline;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--border);}
-.item-row:last-child{border-bottom:none;}
-.item-name{font-size:0.88rem;flex:1;}
-.item-qty{font-size:0.75rem;color:var(--sub);margin:0 10px;}
-.item-price{font-size:0.88rem;font-weight:600;}
-.bill-summary{margin:0 24px;border-top:1.5px solid var(--border);padding:16px 0;}
-.sum-row{display:flex;justify-content:space-between;font-size:0.85rem;color:var(--sub);padding:4px 0;}
-.sum-total{display:flex;justify-content:space-between;font-size:1.1rem;font-weight:700;color:var(--text);padding-top:12px;border-top:1px solid var(--border);margin-top:8px;}
-.sum-total span:last-child{color:var(--accent);}
-.bill-actions{padding:16px 24px 24px;display:flex;gap:10px;}
-.act-btn{flex:1;border:none;border-radius:14px;padding:13px;font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;}
+.bill-wrap{padding:22px;display:none;}
+.bill-card{background:var(--white);border:1.5px solid var(--border);border-radius:18px;overflow:hidden;max-width:460px;margin:0 auto;}
+.b-head{padding:22px;text-align:center;border-bottom:1px solid var(--border);}
+.b-cafe{font-family:'Noto Serif Thai',serif;font-size:1.35rem;font-weight:700;color:var(--brand);}
+.b-tbl{display:inline-block;background:var(--brand-light);color:var(--brand);font-weight:700;font-size:.8rem;border:1px solid #b7dfc9;border-radius:20px;padding:4px 16px;margin:8px 0 4px;}
+.b-date{font-size:.7rem;color:var(--muted);}
+.b-orders{padding:0 22px;}
+.round{margin:14px 0;}
+.round-lbl{font-size:.6rem;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.round-lbl::after{content:'';flex:1;height:1px;background:var(--border);}
+.item-row{display:flex;align-items:flex-start;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--border);}
+.item-row:last-child{border:none;}
+.item-name{font-size:.85rem;flex:1;padding-right:8px;line-height:1.4;}
+.item-price{font-size:.85rem;font-weight:600;white-space:nowrap;}
+.b-summary{margin:0 22px;border-top:1.5px solid var(--border);padding:14px 0;}
+.sum-row{display:flex;justify-content:space-between;font-size:.83rem;color:var(--muted);padding:3px 0;}
+.sum-total{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:700;padding-top:10px;border-top:1px solid var(--border);margin-top:8px;}
+.sum-total span:last-child{color:var(--brand);}
+.b-actions{padding:14px 22px 22px;display:flex;gap:10px;}
+.act-btn{flex:1;border:none;border-radius:14px;padding:13px;font-family:'Noto Sans Thai',sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;}
 .btn-paid{background:var(--green);color:#fff;}
 .btn-print{background:var(--bg);color:var(--text);border:1.5px solid var(--border);}
-.paid-screen{display:none;flex-direction:column;align-items:center;padding:48px 24px;text-align:center;gap:12px;}
-.paid-icon{font-size:3rem;animation:pop 0.4s ease;}
+.paid-screen{display:none;flex-direction:column;align-items:center;padding:44px 22px;text-align:center;gap:10px;}
+.paid-icon{font-size:2.8rem;animation:pop .4s ease;}
 @keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.15)}100%{transform:scale(1)}}
-.paid-h{font-family:'DM Serif Display',serif;font-size:1.4rem;}
-.paid-amt{font-size:2rem;font-weight:700;color:var(--green);}
-.paid-sub{font-size:0.8rem;color:var(--sub);line-height:1.7;}
-.no-orders{text-align:center;padding:40px 24px;color:var(--sub);}
-.loading{text-align:center;padding:40px;color:var(--sub);}
-@media print{.header,.selector-wrap,.bill-actions,.back-btn{display:none!important;}body{background:white;}.bill-wrap{padding:0;display:block!important;}.bill-card{border:none;}}
+.paid-h{font-family:'Noto Serif Thai',serif;font-size:1.3rem;font-weight:700;color:var(--brand);}
+.paid-amt{font-size:1.8rem;font-weight:700;color:var(--green);}
+.paid-sub{font-size:.78rem;color:var(--muted);line-height:1.7;}
+.no-orders{text-align:center;padding:36px 22px;color:var(--muted);}
+.loading{text-align:center;padding:40px;color:var(--muted);}
+@media print{.hdr,.sel-wrap,.b-actions,.back-btn{display:none!important;}body{background:white;}.bill-wrap{padding:0;display:block!important;}.bill-card{border:none;border-radius:0;}}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div>
-    <div class="logo">Baan <span>Café</span></div>
-    <div class="logo-sub">Bill</div>
-  </div>
-  <button class="back-btn" id="backBtn" style="display:none" onclick="showSelector()">← เลือกโต๊ะใหม่</button>
+<div class="hdr">
+  <div><div class="brand">Baan Café</div><div class="sub">Bill</div></div>
+  <button class="back-btn" id="backBtn" onclick="showSelector()">← เลือกโต๊ะใหม่</button>
 </div>
 
-<div class="selector-wrap" id="selectorWrap">
-  <div class="selector-card">
+<div class="sel-wrap" id="selWrap">
+  <div class="sel-card">
     <div class="sel-title">เช็คบิล</div>
     <div class="sel-sub">เลือกโต๊ะที่ต้องการออกบิลครับ</div>
-    <div class="table-grid" id="tableGrid"></div>
+    <div class="tbl-grid" id="tblGrid"></div>
     <button class="open-btn" id="openBtn" onclick="openBill()" disabled>เปิดบิล →</button>
   </div>
 </div>
 
 <div class="bill-wrap" id="billWrap">
   <div class="bill-card">
-    <div class="bill-head">
-      <div class="bill-cafe">Baan <span>Café</span></div>
-      <div class="bill-table-lbl" id="billTableLbl"></div>
-      <div class="bill-date" id="billDate"></div>
+    <div class="b-head">
+      <div class="b-cafe">Baan Café</div>
+      <div class="b-tbl" id="bTable"></div>
+      <div class="b-date" id="bDate"></div>
     </div>
     <div id="billBody"></div>
   </div>
 </div>
 
-<script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx5I8XbCwxc9rnjF1kN5VclevV0tWOzluMDf8jJaz2omneEOa3zH6sXRc-51pmHugQZ/exec';
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAesuRNgMufCal21ejdMIEl6hMi60N2gZs",
+  authDomain: "baan-cafe.firebaseapp.com",
+  databaseURL: "https://baan-cafe-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "baan-cafe", storageBucket: "baan-cafe.firebasestorage.app",
+  messagingSenderId: "599832482819", appId: "1:599832482819:web:ef0e1c19c109c0b7ad2a36"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
 let selectedTable = null;
-let allOrders = [];
-let grandTotal = 0;
+let allOrders = {};
 
-// สร้างปุ่มโต๊ะ
-for (let i = 1; i <= 8; i++) {
-  const btn = document.createElement('button');
-  btn.className = 'table-btn';
-  btn.textContent = 'โต๊ะ ' + i;
-  btn.dataset.num = i;
-  btn.onclick = function() {
-    selectedTable = i;
-    document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
-    document.getElementById('openBtn').disabled = false;
+// build table buttons
+for(let i=1;i<=8;i++){
+  const btn=document.createElement('button');
+  btn.className='tbl-btn'; btn.textContent=`โต๊ะ ${i}`;
+  btn.onclick=function(){
+    selectedTable=i;
+    document.querySelectorAll('.tbl-btn').forEach(b=>b.classList.remove('on'));
+    this.classList.add('on');
+    document.getElementById('openBtn').disabled=false;
   };
-  document.getElementById('tableGrid').appendChild(btn);
+  document.getElementById('tblGrid').appendChild(btn);
 }
 
-function openBill() {
-  const btn = document.getElementById('openBtn');
-  btn.textContent = 'กำลังโหลด...';
-  btn.disabled = true;
+// load orders from Firebase
+onValue(ref(db,'orders'), snap=>{ allOrders = snap.val()||{}; });
 
-  window._cb = function(data) {
-    allOrders = Array.isArray(data) ? data : [];
-    renderBill();
-    btn.textContent = 'เปิดบิล →';
-    btn.disabled = false;
-  };
+window.openBill = function(){
+  if(!selectedTable) return;
+  const tNum = String(selectedTable);
+  const orders = Object.entries(allOrders)
+    .map(([id,v])=>({id,...v}))
+    .filter(o=>String(o.table)===tNum && o.status!=='ชำระแล้ว')
+    .sort((a,b)=>a.createdAt-b.createdAt);
 
-  const old = document.getElementById('_s');
-  if (old) old.remove();
-  const s = document.createElement('script');
-  s.id = '_s';
-  s.src = SCRIPT_URL + '?type=orders&callback=_cb&t=' + Date.now();
-  s.onerror = function() {
-    alert('โหลดไม่สำเร็จ กรุณาลองใหม่');
-    btn.textContent = 'เปิดบิล →';
-    btn.disabled = false;
-  };
-  document.body.appendChild(s);
-}
+  document.getElementById('bTable').textContent=`โต๊ะ ${selectedTable}`;
+  document.getElementById('bDate').textContent=new Date().toLocaleString('th-TH',{timeZone:'Asia/Bangkok',dateStyle:'medium',timeStyle:'short'});
+  document.getElementById('selWrap').style.display='none';
+  document.getElementById('billWrap').style.display='block';
+  document.getElementById('backBtn').style.display='block';
 
-function renderBill() {
-  // กรองด้วยเลขโต๊ะ ไม่สนใจ encoding ภาษาไทย
-  const num = String(selectedTable);
-  const orders = allOrders.filter(function(o) {
-    var t = String(o.table || '');
-    var s = String(o.status || '');
-    // เอาเฉพาะตัวเลขออกจาก table field แล้วเปรียบเทียบ
-    var tableNum = t.replace(/[^0-9]/g, '');
-    return tableNum === num && s !== 'ชำระแล้ว';
-  }).reverse();
-
-  const realTableName = orders.length > 0 ? orders[0].table : ('โต๊ะ ' + selectedTable);
-  document.getElementById('billTableLbl').textContent = realTableName;
-  document.getElementById('billDate').textContent = new Date().toLocaleString('th-TH', {
-    timeZone: 'Asia/Bangkok', dateStyle: 'medium', timeStyle: 'short'
-  });
-
-  document.getElementById('selectorWrap').style.display = 'none';
-  document.getElementById('billWrap').style.display = 'block';
-  document.getElementById('backBtn').style.display = 'block';
-
-  if (!orders.length) {
-    document.getElementById('billBody').innerHTML = '<div class="no-orders">🧾 ไม่พบออเดอร์ของโต๊ะนี้</div>';
+  if(!orders.length){
+    document.getElementById('billBody').innerHTML='<div class="no-orders">🧾 ไม่พบออเดอร์ที่ยังไม่ชำระ</div>';
     return;
   }
 
-  grandTotal = 0;
-  let html = '<div class="bill-orders">';
-  orders.forEach(function(order, i) {
-    var items = String(order.items || '').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
-    var total = parseInt(String(order.total || '0').replace(/[^0-9]/g, '')) || 0;
-    grandTotal += total;
-    var time = '';
-    try {
-      var d = new Date(order.timestamp);
-      if (!isNaN(d)) time = d.toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'});
-      else time = String(order.timestamp || '');
-    } catch(e) { time = String(order.timestamp || ''); }
-
-    html += '<div class="round-wrap"><div class="round-label">รอบที่ ' + (i+1) + ' · ' + time + '</div>';
-    items.forEach(function(item) {
-      var m = item.match(/^(.+)\s+x(\d+)$/);
-      var name = m ? m[1].trim() : item;
-      var qty = m ? m[2] : '1';
-      html += '<div class="item-row"><span class="item-name">' + name + '</span><span class="item-qty">×' + qty + '</span><span class="item-price"></span></div>';
+  let grandTotal=0;
+  let html='<div class="b-orders">';
+  orders.forEach((o,i)=>{
+    const items=Array.isArray(o.items)?o.items:[];
+    const total=Number(o.total)||0;
+    grandTotal+=total;
+    const time=o.createdAt?new Date(o.createdAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}):'';
+    html+=`<div class="round"><div class="round-lbl">รอบที่ ${i+1} · ${time}</div>`;
+    items.forEach(it=>{
+      html+=`<div class="item-row"><span class="item-name">${it.name}</span><span class="item-price">฿${it.price}</span></div>`;
     });
-    html += '<div style="text-align:right;font-size:0.8rem;color:var(--sub);padding:6px 0;">รวมรอบนี้ ' + order.total + '</div>';
-    html += '</div>';
+    html+=`</div>`;
   });
-  html += '</div>';
+  html+='</div>';
 
-  var vat = Math.round(grandTotal * 0.07);
-  var beforeVat = grandTotal - vat;
-  html += '<div class="bill-summary">';
-  html += '<div class="sum-row"><span>จำนวน ' + orders.length + ' รอบ</span><span>' + orders.length + ' ออเดอร์</span></div>';
-  html += '<div class="sum-row"><span>ยอดก่อน VAT</span><span>฿' + beforeVat.toLocaleString() + '</span></div>';
-  html += '<div class="sum-row"><span>VAT 7%</span><span>฿' + vat.toLocaleString() + '</span></div>';
-  html += '<div class="sum-total"><span>ยอดรวมทั้งหมด</span><span>฿' + grandTotal.toLocaleString() + '</span></div>';
-  html += '</div>';
-  html += '<div class="bill-actions"><button class="act-btn btn-print" onclick="window.print()">🖨️ พิมพ์</button><button class="act-btn btn-paid" onclick="markPaid()">✓ ชำระแล้ว</button></div>';
-  html += '<div class="paid-screen" id="paidScreen"><div class="paid-icon">🎉</div><div class="paid-h">ชำระเงินแล้ว</div><div class="paid-amt">฿' + grandTotal.toLocaleString() + '</div><div class="paid-sub">ขอบคุณที่ใช้บริการครับ<br>แวะมาใหม่นะครับ ☕</div><button class="act-btn" style="background:var(--bg);border:1.5px solid var(--border);color:var(--text);margin-top:8px;" onclick="showSelector()">เช็คบิลโต๊ะอื่น</button></div>';
+  const vat=Math.round(grandTotal*.07);
+  html+=`<div class="b-summary">
+    <div class="sum-row"><span>จำนวน ${orders.length} รอบ</span><span>${orders.length} ออเดอร์</span></div>
+    <div class="sum-row"><span>ยอดก่อน VAT</span><span>฿${(grandTotal-vat).toLocaleString()}</span></div>
+    <div class="sum-row"><span>VAT 7%</span><span>฿${vat.toLocaleString()}</span></div>
+    <div class="sum-total"><span>ยอดรวมทั้งหมด</span><span>฿${grandTotal.toLocaleString()}</span></div>
+  </div>
+  <div class="b-actions">
+    <button class="act-btn btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+    <button class="act-btn btn-paid" onclick="markPaid(${grandTotal})">✓ ชำระแล้ว</button>
+  </div>
+  <div class="paid-screen" id="paidScreen">
+    <div class="paid-icon">🎉</div>
+    <div class="paid-h">ชำระเงินแล้ว</div>
+    <div class="paid-amt">฿${grandTotal.toLocaleString()}</div>
+    <div class="paid-sub">ขอบคุณที่ใช้บริการครับ<br>แวะมาใหม่นะครับ ☕</div>
+    <button class="act-btn" style="background:var(--bg);border:1.5px solid var(--border);" onclick="showSelector()">เช็คบิลโต๊ะอื่น</button>
+  </div>`;
 
-  document.getElementById('billBody').innerHTML = html;
-}
+  document.getElementById('billBody').innerHTML=html;
 
-function markPaid() {
-  var num = String(selectedTable);
-  var toUpdate = allOrders.filter(function(o) {
-    var t = String(o.table || '');
-    var s = String(o.status || '');
-    var tableNum = t.replace(/[^0-9]/g, '');
-    return tableNum === num && s !== 'ชำระแล้ว';
-  });
+  window.markPaid = async function(total){
+    const tNum=String(selectedTable);
+    const toUpdate=Object.entries(allOrders)
+      .filter(([id,o])=>String(o.table)===tNum && o.status!=='ชำระแล้ว');
+    for(const [id] of toUpdate){
+      await update(ref(db,`orders/${id}`),{status:'ชำระแล้ว'});
+    }
+    document.querySelector('.b-actions').style.display='none';
+    document.getElementById('paidScreen').style.display='flex';
+  };
+};
 
-  toUpdate.forEach(function(order) {
-    var s = document.createElement('script');
-    s.src = SCRIPT_URL + '?action=updateStatus&rowIndex=' + order.rowIndex + '&status=' + encodeURIComponent('ชำระแล้ว') + '&callback=_noop&t=' + Date.now();
-    document.body.appendChild(s);
-  });
-  window._noop = function(){};
-
-  var actions = document.querySelector('.bill-actions');
-  if (actions) actions.style.display = 'none';
-  var paid = document.getElementById('paidScreen');
-  if (paid) paid.style.display = 'flex';
-}
-
-function showSelector() {
-  selectedTable = null;
-  document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('openBtn').disabled = true;
-  document.getElementById('openBtn').textContent = 'เปิดบิล →';
-  document.getElementById('selectorWrap').style.display = 'block';
-  document.getElementById('billWrap').style.display = 'none';
-  document.getElementById('backBtn').style.display = 'none';
-}
+window.showSelector = function(){
+  selectedTable=null;
+  document.querySelectorAll('.tbl-btn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('openBtn').disabled=true;
+  document.getElementById('selWrap').style.display='block';
+  document.getElementById('billWrap').style.display='none';
+  document.getElementById('backBtn').style.display='none';
+};
 </script>
 </body>
 </html>
