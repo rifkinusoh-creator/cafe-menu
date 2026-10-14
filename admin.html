@@ -263,11 +263,47 @@ document.getElementById('moveFrom').addEventListener('change', updateMovePreview
 
 function updateMovePreview(){
   const from = document.getElementById('moveFrom').value;
-  if(!from){ document.getElementById('movePreview').textContent=''; return; }
-  const count = Object.values(allOrders)
-    .filter(o=>String(o.table)===String(from) && o.status!=='ชำระแล้ว').length;
-  document.getElementById('movePreview').textContent =
-    count ? `📋 พบ ${count} ออเดอร์ที่ยังไม่ชำระในโต๊ะ ${from}` : `✓ ไม่มีออเดอร์ค้างในโต๊ะ ${from}`;
+  const preview = document.getElementById('movePreview');
+  if(!from){ preview.innerHTML=''; return; }
+
+  const orders = Object.entries(allOrders)
+    .filter(([,o])=>String(o.table)===String(from) && o.status!=='ชำระแล้ว')
+    .map(([id,o])=>({id,...o}))
+    .sort((a,b)=>a.createdAt-b.createdAt);
+
+  if(!orders.length){
+    preview.innerHTML=`<div style="color:var(--brand);font-size:.78rem;">✓ ไม่มีออเดอร์ค้างในโต๊ะ ${from}</div>`;
+    return;
+  }
+
+  const statusLabel={'รอดำเนินการ':'⏳','กำลังทำ':'🔥','เสร็จแล้ว':'✅'};
+  const statusCls={'รอดำเนินการ':'w','กำลังทำ':'c','เสร็จแล้ว':'d'};
+
+  let html=`<div style="margin-top:4px;">
+    <div style="font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:8px;">📋 พบ ${orders.length} ออเดอร์ที่จะย้าย</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">`;
+
+  orders.forEach((o,i)=>{
+    const time = o.createdAt ? new Date(o.createdAt).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}) : '';
+    const items = Array.isArray(o.items)?o.items:[];
+    const cls = statusCls[o.status]||'w';
+    const icon = statusLabel[o.status]||'⏳';
+    html+=`<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;border-left:3px solid ${cls==='w'?'#ea580c':cls==='c'?'#2563eb':'#16a34a'};">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:.75rem;font-weight:600;color:var(--text);">รอบที่ ${i+1} · ${time}</span>
+        <span style="font-size:.65rem;font-weight:600;padding:2px 8px;border-radius:20px;background:${cls==='w'?'#fff7ed':cls==='c'?'#eff6ff':'#f0fdf4'};color:${cls==='w'?'#ea580c':cls==='c'?'#2563eb':'#16a34a'};">${icon} ${o.status}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        ${items.map(it=>`<div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--text);">
+          <span>${it.name}</span><span style="color:var(--muted);">฿${it.price}</span>
+        </div>`).join('')}
+      </div>
+      <div style="text-align:right;font-size:.75rem;font-weight:700;color:var(--brand);margin-top:6px;padding-top:6px;border-top:1px dashed var(--border);">฿${o.total}</div>
+    </div>`;
+  });
+
+  html+=`</div></div>`;
+  preview.innerHTML=html;
 }
 
 window.moveTable = async function(){
