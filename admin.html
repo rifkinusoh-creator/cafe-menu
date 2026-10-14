@@ -13,6 +13,31 @@ body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--te
 .brand{font-family:'Noto Serif Thai',serif;font-size:1.15rem;color:var(--brand);}
 .badge{background:var(--brand-light);color:var(--brand);font-size:.7rem;font-weight:600;padding:3px 10px;border-radius:20px;border:1px solid #b7dfc9;}
 .add-btn-hdr{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-family:'Noto Sans Thai',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;}
+.import-btn-hdr{background:var(--bg);color:var(--brand);border:1.5px solid #b7dfc9;border-radius:10px;padding:8px 16px;font-family:'Noto Sans Thai',sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;}
+.hdr-btns{display:flex;gap:8px;}
+
+/* IMPORT MODAL */
+.import-modal{background:var(--white);border-radius:20px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:24px;}
+.drop-zone{border:2px dashed var(--border);border-radius:14px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg);}
+.drop-zone.drag{border-color:var(--brand);background:var(--brand-light);}
+.drop-zone:hover{border-color:var(--brand);}
+.drop-icon{font-size:2.4rem;margin-bottom:10px;}
+.drop-txt{font-size:.88rem;color:var(--muted);}
+.drop-txt strong{color:var(--brand);}
+.drop-sub{font-size:.72rem;color:var(--muted);margin-top:6px;}
+.template-btn{background:none;border:none;color:var(--brand);font-family:'Noto Sans Thai',sans-serif;font-size:.78rem;text-decoration:underline;cursor:pointer;margin-top:10px;}
+
+/* PREVIEW TABLE */
+.preview-wrap{margin-top:16px;}
+.preview-title{font-size:.72rem;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.preview-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.preview-table th{background:var(--bg);padding:8px 10px;text-align:left;border-bottom:1.5px solid var(--border);font-weight:600;color:var(--muted);}
+.preview-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text);}
+.preview-table tr:last-child td{border:none;}
+.row-ok{color:var(--brand);}
+.row-err{color:var(--red);}
+.import-actions{display:flex;gap:8px;margin-top:16px;}
+.import-count{font-size:.8rem;color:var(--muted);margin-top:10px;text-align:center;}
 
 .wrap{padding:20px 22px;}
 .section-title{font-family:'Noto Serif Thai',serif;font-size:1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
@@ -78,7 +103,42 @@ select.form-input{cursor:pointer;}
     <div class="brand">Baan Café</div>
     <div class="badge">⚙️ Admin</div>
   </div>
-  <button class="add-btn-hdr" onclick="openAddModal()">+ เพิ่มเมนู</button>
+  <div class="hdr-btns">
+    <button class="import-btn-hdr" onclick="openImport()">📥 Import CSV</button>
+    <button class="add-btn-hdr" onclick="openAddModal()">+ เพิ่มเมนู</button>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="importOverlay">
+  <div class="import-modal">
+    <div class="modal-title">📥 Import เมนูจาก CSV</div>
+
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('csvFile').click()">
+      <div class="drop-icon">📄</div>
+      <div class="drop-txt">คลิกหรือลากไฟล์ <strong>CSV / Excel</strong> มาวางได้เลย</div>
+      <div class="drop-sub">รองรับ .csv และ .xlsx</div>
+      <button class="template-btn" onclick="event.stopPropagation();downloadTemplate()">⬇️ โหลด template CSV</button>
+    </div>
+    <input type="file" id="csvFile" accept=".csv,.xlsx" style="display:none" onchange="handleFile(this.files[0])">
+
+    <div id="previewWrap" style="display:none">
+      <div class="preview-wrap">
+        <div class="preview-title">ตรวจสอบข้อมูลก่อน import</div>
+        <div style="overflow-x:auto;">
+          <table class="preview-table">
+            <thead><tr><th>#</th><th>ชื่อ</th><th>ราคา</th><th>หมวดหมู่</th><th>คำอธิบาย</th><th>สถานะ</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <div class="import-count" id="importCount"></div>
+      </div>
+      <div class="import-actions">
+        <button class="m-cancel" onclick="resetImport()">ยกเลิก</button>
+        <button class="m-save" id="importConfirmBtn" onclick="confirmImport()">✓ Import เมนูทั้งหมด</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="wrap">
@@ -324,6 +384,123 @@ function showToast(msg){
 document.getElementById('editOverlay').addEventListener('click',e=>{
   if(e.target.id==='editOverlay') closeModal();
 });
+document.getElementById('importOverlay').addEventListener('click',e=>{
+  if(e.target.id==='importOverlay') closeImport();
+});
+
+// DRAG & DROP
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('drag');
+  const f=e.dataTransfer.files[0]; if(f) handleFile(f);
+});
+
+let parsedRows = [];
+
+window.openImport = function(){
+  resetImport();
+  document.getElementById('importOverlay').classList.add('open');
+};
+window.closeImport = function(){
+  document.getElementById('importOverlay').classList.remove('open');
+};
+window.resetImport = function(){
+  parsedRows=[];
+  document.getElementById('previewWrap').style.display='none';
+  document.getElementById('csvFile').value='';
+  dz.classList.remove('drag');
+};
+
+window.downloadTemplate = function(){
+  const csv = 'name,price,category,desc,image\nAmericano,55,coffee,กาแฟดำเข้มข้น,\nLatte,75,coffee,กาแฟนมสด,\nชาไทย,55,tea,ชาไทยต้นตำรับ,\n';
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+  a.download='baan-cafe-menu-template.csv'; a.click();
+};
+
+window.handleFile = async function(file){
+  if(!file) return;
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'){
+    // load SheetJS
+    if(!window.XLSX){
+      await new Promise(res=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload=res; document.head.appendChild(s);
+      });
+    }
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const data=XLSX.utils.sheet_to_json(ws,{defval:''});
+    parseRows(data);
+  } else {
+    const text=await file.text();
+    const lines=text.split('\n').filter(l=>l.trim());
+    const headers=lines[0].split(',').map(h=>h.trim().replace(/^["']|["']$/g,'').toLowerCase());
+    const data=lines.slice(1).map(line=>{
+      const vals=line.match(/(".*?"|[^,]+)(?=,|$)/g)||line.split(',');
+      const obj={};
+      headers.forEach((h,i)=>{ obj[h]=(vals[i]||'').trim().replace(/^["']|["']$/g,''); });
+      return obj;
+    });
+    parseRows(data);
+  }
+};
+
+const validCats=['coffee','tea','smoothie','food','dessert'];
+function parseRows(data){
+  parsedRows=data.map((r,i)=>{
+    const name=r.name||r['ชื่อ']||r['ชื่อเมนู']||'';
+    const price=parseFloat(r.price||r['ราคา']||0);
+    const category=(r.category||r['หมวดหมู่']||'coffee').toLowerCase().trim();
+    const desc=r.desc||r['คำอธิบาย']||r.description||'';
+    const image=r.image||r['รูปภาพ']||'';
+    const valid=!!name && !isNaN(price) && price>0 && validCats.includes(category);
+    return {name,price,category,desc,image,valid};
+  }).filter(r=>r.name);
+
+  const ok=parsedRows.filter(r=>r.valid).length;
+  const err=parsedRows.length-ok;
+  document.getElementById('previewBody').innerHTML=parsedRows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td>฿${r.price}</td>
+      <td>${r.category}</td>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.desc}</td>
+      <td class="${r.valid?'row-ok':'row-err'}">${r.valid?'✓ ดี':'✗ ข้อมูลไม่ครบ'}</td>
+    </tr>`).join('');
+  document.getElementById('importCount').textContent=
+    `พร้อม import ${ok} รายการ${err?` · ข้ามที่มีปัญหา ${err} รายการ`:''}`;
+  document.getElementById('importConfirmBtn').textContent=`✓ Import ${ok} เมนู`;
+  document.getElementById('previewWrap').style.display='block';
+}
+
+window.confirmImport = async function(){
+  const btn=document.getElementById('importConfirmBtn');
+  const toImport=parsedRows.filter(r=>r.valid);
+  if(!toImport.length){alert('ไม่มีรายการที่พร้อม import ครับ');return;}
+  btn.textContent='กำลัง import...';btn.disabled=true;
+  try{
+    for(const r of toImport){
+      await push(ref(db,'menu'),{
+        name:r.name, price:r.price,
+        category:r.category, desc:r.desc,
+        image:r.image, soldOut:false
+      });
+    }
+    closeImport();
+    showToast(`Import ${toImport.length} เมนูเรียบร้อยแล้ว ✓`);
+  }catch(e){
+    alert('Import ไม่สำเร็จ: '+e.message);
+    btn.textContent=`✓ Import ${toImport.length} เมนู`;
+    btn.disabled=false;
+  }
+};
 </script>
 </body>
 </html>
