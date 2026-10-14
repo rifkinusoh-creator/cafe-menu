@@ -142,6 +142,31 @@ select.form-input{cursor:pointer;}
 </div>
 
 <div class="wrap">
+  <!-- MOVE TABLE SECTION -->
+  <div class="section-title" style="margin-bottom:14px;">🪑 ย้ายโต๊ะ</div>
+  <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;">
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">ย้ายออเดอร์ทั้งหมดของโต๊ะหนึ่งไปยังอีกโต๊ะ (เฉพาะที่ยังไม่ชำระ)</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:100px;">
+        <div class="form-label" style="margin-bottom:5px;">จากโต๊ะ</div>
+        <select class="form-input" id="moveFrom">
+          <option value="">เลือกโต๊ะ</option>
+        </select>
+      </div>
+      <div style="font-size:1.2rem;color:var(--muted);padding-top:18px;">→</div>
+      <div style="flex:1;min-width:100px;">
+        <div class="form-label" style="margin-bottom:5px;">ไปโต๊ะ</div>
+        <select class="form-input" id="moveTo">
+          <option value="">เลือกโต๊ะ</option>
+        </select>
+      </div>
+      <div style="padding-top:18px;">
+        <button class="add-btn-hdr" onclick="moveTable()" style="white-space:nowrap;">ย้ายโต๊ะ →</button>
+      </div>
+    </div>
+    <div id="movePreview" style="margin-top:12px;font-size:.78rem;color:var(--muted);"></div>
+  </div>
+
   <div class="section-title">เมนูทั้งหมด</div>
   <div class="menu-list" id="menuList"><div class="loading">กำลังโหลด...</div></div>
 </div>
@@ -199,7 +224,7 @@ select.form-input{cursor:pointer;}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, set, update, remove, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, update, remove, push, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAesuRNgMufCal21ejdMIEl6hMi60N2gZs",
@@ -216,7 +241,59 @@ const catEmoji = {coffee:'☕',tea:'🍵',smoothie:'🥤',food:'🍽️',dessert
 
 let menuData = {};
 let editId = null;
-let optGroups = []; // [{label, required, choices:[{label,extra}]}]
+let optGroups = [];
+let allOrders = {};
+
+// populate table dropdowns
+for(let i=1;i<=8;i++){
+  ['moveFrom','moveTo'].forEach(id=>{
+    const opt=document.createElement('option');
+    opt.value=i; opt.textContent=`โต๊ะ ${i}`;
+    document.getElementById(id).appendChild(opt);
+  });
+}
+
+// listen orders for move table preview
+onValue(ref(db,'orders'), snap=>{
+  allOrders = snap.val()||{};
+  updateMovePreview();
+});
+
+document.getElementById('moveFrom').addEventListener('change', updateMovePreview);
+
+function updateMovePreview(){
+  const from = document.getElementById('moveFrom').value;
+  if(!from){ document.getElementById('movePreview').textContent=''; return; }
+  const count = Object.values(allOrders)
+    .filter(o=>String(o.table)===String(from) && o.status!=='ชำระแล้ว').length;
+  document.getElementById('movePreview').textContent =
+    count ? `📋 พบ ${count} ออเดอร์ที่ยังไม่ชำระในโต๊ะ ${from}` : `✓ ไม่มีออเดอร์ค้างในโต๊ะ ${from}`;
+}
+
+window.moveTable = async function(){
+  const from = document.getElementById('moveFrom').value;
+  const to = document.getElementById('moveTo').value;
+  if(!from||!to){ alert('กรุณาเลือกโต๊ะต้นทางและปลายทางครับ'); return; }
+  if(from===to){ alert('โต๊ะต้นทางและปลายทางเป็นโต๊ะเดียวกันครับ'); return; }
+
+  const toMove = Object.entries(allOrders)
+    .filter(([,o])=>String(o.table)===String(from) && o.status!=='ชำระแล้ว');
+
+  if(!toMove.length){ alert(`ไม่มีออเดอร์ค้างในโต๊ะ ${from} ครับ`); return; }
+  if(!confirm(`ย้าย ${toMove.length} ออเดอร์ จากโต๊ะ ${from} ไปโต๊ะ ${to} ใช่ไหมครับ?`)) return;
+
+  try{
+    for(const [id] of toMove){
+      await update(ref(db,`orders/${id}`),{table:String(to)});
+    }
+    showToast(`ย้าย ${toMove.length} ออเดอร์ จากโต๊ะ ${from} → โต๊ะ ${to} แล้ว ✓`);
+    document.getElementById('moveFrom').value='';
+    document.getElementById('moveTo').value='';
+    updateMovePreview();
+  }catch(e){
+    alert('ย้ายโต๊ะไม่สำเร็จ: '+e.message);
+  }
+};
 
 onValue(ref(db,'menu'), snap=>{
   menuData = snap.val()||{};

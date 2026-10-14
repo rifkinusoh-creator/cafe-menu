@@ -269,7 +269,7 @@ if(tableNo){
     const all = snap.val()||{};
     tableOrders = Object.entries(all)
       .map(([id,v])=>({id,...v}))
-      .filter(o=>String(o.table)===String(tableNo))
+      .filter(o=>String(o.table)===String(tableNo) && o.status!=='ชำระแล้ว')
       .sort((a,b)=>b.createdAt-a.createdAt);
 
     // update badge
