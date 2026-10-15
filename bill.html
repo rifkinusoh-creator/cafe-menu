@@ -168,7 +168,7 @@ for(let i=1;i<=8;i++){
 // load orders from Firebase
 onValue(ref(db,'orders'), snap=>{ allOrders = snap.val()||{}; });
 
-window.openBill = function(){
+window.openBill = async function(){
   if(!selectedTable) return;
   const tNum = String(selectedTable);
   const orders = Object.entries(allOrders)
@@ -256,17 +256,17 @@ window.openBill = function(){
   } else {
     qrBox.innerHTML=`<div class="qr-no-account">ยังไม่ได้ตั้งค่าเบอร์ PromptPay<br><span style="font-size:.72rem;">ตั้งค่าได้ที่หน้า Admin</span></div>`;
   }
+};
 
-  window.markPaid = async function(total){
-    const tNum=String(selectedTable);
-    const toUpdate=Object.entries(allOrders)
-      .filter(([id,o])=>String(o.table)===tNum && o.status!=='ชำระแล้ว');
-    for(const [id] of toUpdate){
-      await update(ref(db,`orders/${id}`),{status:'ชำระแล้ว'});
-    }
-    document.querySelector('.b-actions').style.display='none';
-    document.getElementById('paidScreen').style.display='flex';
-  };
+window.markPaid = async function(total){
+  const tNum=String(selectedTable);
+  const toUpdate=Object.entries(allOrders)
+    .filter(([id,o])=>String(o.table)===tNum && o.status!=='ชำระแล้ว');
+  for(const [id] of toUpdate){
+    await update(ref(db,`orders/${id}`),{status:'ชำระแล้ว'});
+  }
+  document.querySelector('.b-actions').style.display='none';
+  document.getElementById('paidScreen').style.display='flex';
 };
 
 window.showSelector = function(){
