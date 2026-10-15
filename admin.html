@@ -156,6 +156,16 @@ select.form-input{cursor:pointer;}
     <div id="ppStatus" style="margin-top:10px;font-size:.75rem;color:var(--muted);"></div>
   </div>
 
+  <!-- MANAGE TABLES -->
+  <div class="section-title" style="margin-bottom:14px;">🪑 จัดการโต๊ะ</div>
+  <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;">
+    <div style="display:flex;gap:10px;margin-bottom:12px;">
+      <input class="form-input" id="newTable" placeholder="ชื่อ/เลขโต๊ะ เช่น 9 หรือ A1" maxlength="10">
+      <button class="add-btn-hdr" onclick="addTable()" style="white-space:nowrap;">+ เพิ่มโต๊ะ</button>
+    </div>
+    <div class="opt-chips-edit" id="tableChips"></div>
+  </div>
+
   <!-- MOVE TABLE SECTION -->
   <div class="section-title" style="margin-bottom:14px;">🪑 ย้ายโต๊ะ</div>
   <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;">
@@ -275,14 +285,55 @@ window.savePromptPay = async function(){
   showToast('บันทึกเบอร์ PromptPay แล้ว ✓');
 };
 
-// populate table dropdowns
-for(let i=1;i<=8;i++){
+// TABLES — stored in Firebase at settings/tables
+let tables = [];
+const DEFAULT_TABLES = ['1','2','3','4','5','6','7','8'];
+
+onValue(ref(db,'settings/tables'), snap=>{
+  const v = snap.val();
+  tables = v ? Object.keys(v) : [];
+  tables.sort((a,b)=>a.localeCompare(b,'th',{numeric:true}));
+  renderTables();
+});
+
+function renderTables(){
+  document.getElementById('tableChips').innerHTML = tables.length
+    ? tables.map(t=>`<div class="opt-chip-edit">โต๊ะ ${t}
+        <button class="del-chip" onclick="removeTable('${t}')">✕</button></div>`).join('')
+    : `<button class="add-choice-btn" onclick="seedTables()">สร้างโต๊ะเริ่มต้น 1-8</button>`;
   ['moveFrom','moveTo'].forEach(id=>{
-    const opt=document.createElement('option');
-    opt.value=i; opt.textContent=`โต๊ะ ${i}`;
-    document.getElementById(id).appendChild(opt);
+    const sel = document.getElementById(id);
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">เลือกโต๊ะ</option>' +
+      tables.map(t=>`<option value="${t}">โต๊ะ ${t}</option>`).join('');
+    sel.value = cur;
   });
 }
+
+window.seedTables = async function(){
+  const o = {}; DEFAULT_TABLES.forEach(t=>o[t]=true);
+  await set(ref(db,'settings/tables'), o);
+};
+
+window.addTable = async function(){
+  const inp = document.getElementById('newTable');
+  const name = inp.value.trim();
+  if(!name) return;
+  if(/[.$#\[\]\/]/.test(name)){ alert('ห้ามใช้อักขระ . $ # [ ] /'); return; }
+  if(tables.includes(name)){ alert('มีโต๊ะนี้อยู่แล้วครับ'); return; }
+  await set(ref(db,`settings/tables/${name}`), true);
+  inp.value = '';
+  showToast(`เพิ่มโต๊ะ ${name} แล้ว ✓`);
+};
+
+window.removeTable = async function(name){
+  const hasOpen = Object.values(allOrders)
+    .some(o=>String(o.table)===name && o.status!=='ชำระแล้ว');
+  if(hasOpen){ alert(`โต๊ะ ${name} ยังมีออเดอร์ค้างชำระ ลบไม่ได้ครับ`); return; }
+  if(!confirm(`ลบโต๊ะ ${name} ใช่ไหมครับ?`)) return;
+  await remove(ref(db,`settings/tables/${name}`));
+  showToast(`ลบโต๊ะ ${name} แล้ว`);
+};
 
 // listen orders for move table preview
 onValue(ref(db,'orders'), snap=>{

@@ -152,18 +152,26 @@ function generatePromptPayPayload(phone, amount){
   return payload + crc16(payload);
 }
 
-// build table buttons
-for(let i=1;i<=8;i++){
-  const btn=document.createElement('button');
-  btn.className='tbl-btn'; btn.textContent=`โต๊ะ ${i}`;
-  btn.onclick=function(){
-    selectedTable=i;
-    document.querySelectorAll('.tbl-btn').forEach(b=>b.classList.remove('on'));
-    this.classList.add('on');
-    document.getElementById('openBtn').disabled=false;
-  };
-  document.getElementById('tblGrid').appendChild(btn);
-}
+// build table buttons from Firebase settings/tables
+onValue(ref(db,'settings/tables'), snap=>{
+  const v = snap.val();
+  const tables = (v ? Object.keys(v) : ['1','2','3','4','5','6','7','8'])
+    .sort((a,b)=>a.localeCompare(b,'th',{numeric:true}));
+  const grid = document.getElementById('tblGrid');
+  grid.innerHTML = '';
+  tables.forEach(t=>{
+    const btn = document.createElement('button');
+    btn.className = 'tbl-btn' + (String(selectedTable)===t ? ' on' : '');
+    btn.textContent = `โต๊ะ ${t}`;
+    btn.onclick = function(){
+      selectedTable = t;
+      document.querySelectorAll('.tbl-btn').forEach(b=>b.classList.remove('on'));
+      this.classList.add('on');
+      document.getElementById('openBtn').disabled = false;
+    };
+    grid.appendChild(btn);
+  });
+});
 
 // load orders from Firebase
 onValue(ref(db,'orders'), snap=>{ allOrders = snap.val()||{}; });

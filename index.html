@@ -259,6 +259,13 @@ if(tableNo){
     `<div class="table-chip"><span class="lbl">โต๊ะ</span><span class="val">${tableNo}</span></div>`;
 }
 
+// Valid tables from Firebase (null = not configured yet, allow)
+let validTables = null;
+onValue(ref(db,'settings/tables'), snap=>{
+  const v = snap.val();
+  validTables = v ? Object.keys(v) : null;
+});
+
 // ORDER HISTORY — listen real-time for this table's orders
 let tableOrders = [];
 const statusCls = {'รอดำเนินการ':'w','กำลังทำ':'c','เสร็จแล้ว':'d','ชำระแล้ว':'p'};
@@ -574,6 +581,9 @@ window.removeCartItem = function(i){
 
 window.placeOrder = async function(){
   if(!tableNo){alert('กรุณาสแกน QR Code ที่โต๊ะก่อนสั่งอาหารครับ');return;}
+  if(validTables && !validTables.includes(String(tableNo))){
+    alert('ไม่พบโต๊ะนี้ในระบบ กรุณาสแกน QR ใหม่ครับ'); return;
+  }
   if(!cart.length){alert('ยังไม่มีรายการ');return;}
   const btn = document.querySelector('.place-btn');
   btn.textContent='กำลังส่ง...';btn.disabled=true;
