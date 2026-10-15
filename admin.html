@@ -142,6 +142,20 @@ select.form-input{cursor:pointer;}
 </div>
 
 <div class="wrap">
+  <!-- PROMPTPAY SETTINGS -->
+  <div class="section-title" style="margin-bottom:14px;">💳 ตั้งค่า PromptPay</div>
+  <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;">
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:14px;">เบอร์โทรที่ผูก PromptPay — QR จะแสดงอัตโนมัติในหน้าเช็คบิล</div>
+    <div style="display:flex;gap:10px;align-items:flex-end;">
+      <div style="flex:1;">
+        <div class="form-label" style="margin-bottom:5px;">เบอร์ PromptPay</div>
+        <input class="form-input" id="ppInput" type="tel" placeholder="0812345678" maxlength="10">
+      </div>
+      <button class="add-btn-hdr" onclick="savePromptPay()" style="white-space:nowrap;padding:10px 18px;">บันทึก</button>
+    </div>
+    <div id="ppStatus" style="margin-top:10px;font-size:.75rem;color:var(--muted);"></div>
+  </div>
+
   <!-- MOVE TABLE SECTION -->
   <div class="section-title" style="margin-bottom:14px;">🪑 ย้ายโต๊ะ</div>
   <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:18px;margin-bottom:24px;">
@@ -243,6 +257,23 @@ let menuData = {};
 let editId = null;
 let optGroups = [];
 let allOrders = {};
+
+// load PromptPay setting
+onValue(ref(db,'settings/promptpay'), snap=>{
+  const val = snap.val()||'';
+  document.getElementById('ppInput').value = val;
+  document.getElementById('ppStatus').textContent = val
+    ? `✓ ตั้งค่าแล้ว: ${val.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3')}`
+    : 'ยังไม่ได้ตั้งค่า';
+  document.getElementById('ppStatus').style.color = val ? 'var(--brand)' : 'var(--muted)';
+});
+
+window.savePromptPay = async function(){
+  const val = document.getElementById('ppInput').value.replace(/[^0-9]/g,'');
+  if(!val||val.length!==10){ alert('กรุณากรอกเบอร์โทร 10 หลักครับ'); return; }
+  await set(ref(db,'settings/promptpay'), val);
+  showToast('บันทึกเบอร์ PromptPay แล้ว ✓');
+};
 
 // populate table dropdowns
 for(let i=1;i<=8;i++){

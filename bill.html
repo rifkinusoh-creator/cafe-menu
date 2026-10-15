@@ -54,6 +54,15 @@ body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--te
 .paid-sub{font-size:.78rem;color:var(--muted);line-height:1.7;}
 .no-orders{text-align:center;padding:36px 22px;color:var(--muted);}
 .loading{text-align:center;padding:40px;color:var(--muted);}
+
+/* PROMPTPAY QR */
+.qr-section{margin:0 22px 22px;border:1.5px solid #b7dfc9;border-radius:14px;padding:16px;background:var(--brand-light);text-align:center;}
+.qr-title{font-size:.72rem;font-weight:600;color:var(--brand);letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px;}
+.qr-amount{font-size:1.1rem;font-weight:700;color:var(--brand);margin-bottom:12px;}
+.qr-canvas{border-radius:10px;background:#fff;padding:10px;display:inline-block;}
+.qr-no-account{font-size:.78rem;color:var(--muted);padding:12px;background:var(--bg);border-radius:10px;border:1px dashed var(--border);}
+.qr-phone{font-size:.72rem;color:var(--muted);margin-top:8px;}
+
 @media print{.hdr,.sel-wrap,.b-actions,.back-btn{display:none!important;}body{background:white;}.bill-wrap{padding:0;display:block!important;}.bill-card{border:none;border-radius:0;}}
 </style>
 </head>
@@ -86,7 +95,7 @@ body{font-family:'Noto Sans Thai',sans-serif;background:var(--bg);color:var(--te
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAesuRNgMufCal21ejdMIEl6hMi60N2gZs",
@@ -100,6 +109,48 @@ const db = getDatabase(app);
 
 let selectedTable = null;
 let allOrders = {};
+let promptPayNumber = '';
+
+// load PromptPay number from Firebase settings
+onValue(ref(db,'settings/promptpay'), snap=>{
+  promptPayNumber = snap.val()||'';
+});
+
+// PromptPay QR generator (EMV QR standard)
+function generatePromptPayPayload(phone, amount){
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  const formattedPhone = '0066' + cleanPhone.substring(1); // แปลงเบอร์ไทยเป็น format สากล
+
+  function pad(val){ return val.toString().padStart(2,'0'); }
+  function field(id, val){ return pad(id) + pad(val.length) + val; }
+
+  const target = field(0,'A000000677010111') + field(1,formattedPhone);
+  const merchantInfo = field(29, target);
+  const amountStr = amount.toFixed(2);
+
+  let payload =
+    field(0,'01') +           // Payload Format Indicator
+    field(1,'12') +            // Point of Initiation (12=dynamic)
+    merchantInfo +             // Merchant Account Info
+    field(53,'764') +          // Transaction Currency (764=THB)
+    field(54,amountStr) +      // Transaction Amount
+    field(58,'TH') +           // Country Code
+    '6304';                    // CRC field ID + length placeholder
+
+  // CRC-16/CCITT-FALSE
+  function crc16(str){
+    let crc=0xFFFF;
+    for(let i=0;i<str.length;i++){
+      crc^=str.charCodeAt(i)<<8;
+      for(let j=0;j<8;j++){
+        crc=(crc&0x8000)?(crc<<1)^0x1021:(crc<<1);
+      }
+    }
+    return (crc&0xFFFF).toString(16).toUpperCase().padStart(4,'0');
+  }
+
+  return payload + crc16(payload);
+}
 
 // build table buttons
 for(let i=1;i<=8;i++){
@@ -162,6 +213,11 @@ window.openBill = function(){
     <button class="act-btn btn-print" onclick="window.print()">🖨️ พิมพ์</button>
     <button class="act-btn btn-paid" onclick="markPaid(${grandTotal})">✓ ชำระแล้ว</button>
   </div>
+  <div class="qr-section" id="qrSection">
+    <div class="qr-title">💳 ชำระเงินผ่าน PromptPay</div>
+    <div class="qr-amount">฿${grandTotal.toLocaleString()}</div>
+    <div id="qrBox"></div>
+  </div>
   <div class="paid-screen" id="paidScreen">
     <div class="paid-icon">🎉</div>
     <div class="paid-h">ชำระเงินแล้ว</div>
@@ -171,6 +227,35 @@ window.openBill = function(){
   </div>`;
 
   document.getElementById('billBody').innerHTML=html;
+
+  // generate PromptPay QR
+  const qrBox = document.getElementById('qrBox');
+  if(promptPayNumber){
+    // load QRCode library
+    if(!window.QRCode){
+      await new Promise(res=>{
+        const s=document.createElement('script');
+        s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        s.onload=res; document.head.appendChild(s);
+      });
+    }
+    try{
+      const payload = generatePromptPayPayload(promptPayNumber, grandTotal);
+      qrBox.innerHTML='<div class="qr-canvas" id="qrCanvas"></div>';
+      new QRCode(document.getElementById('qrCanvas'),{
+        text: payload,
+        width: 180, height: 180,
+        colorDark:'#2d6a4f', colorLight:'#ffffff',
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      const phone = promptPayNumber.replace(/(\d{3})(\d{3})(\d{4})/,'$1-$2-$3');
+      qrBox.insertAdjacentHTML('beforeend',`<div class="qr-phone">PromptPay: ${phone}</div>`);
+    }catch(e){
+      qrBox.innerHTML=`<div class="qr-no-account">ไม่สามารถสร้าง QR ได้ กรุณาตรวจสอบเบอร์ PromptPay</div>`;
+    }
+  } else {
+    qrBox.innerHTML=`<div class="qr-no-account">ยังไม่ได้ตั้งค่าเบอร์ PromptPay<br><span style="font-size:.72rem;">ตั้งค่าได้ที่หน้า Admin</span></div>`;
+  }
 
   window.markPaid = async function(total){
     const tNum=String(selectedTable);
